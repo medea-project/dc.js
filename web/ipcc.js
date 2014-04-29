@@ -549,7 +549,3 @@ d3.csv("ndx.csv", function (data) {
     dc.redrawAll("group");
     */
 });
-
-//#### Version
-//Determine the current version of dc with `dc.version`
-d3.selectAll("#version").text(dc.version);
