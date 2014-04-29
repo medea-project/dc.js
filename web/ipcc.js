@@ -47,10 +47,116 @@ var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 //```
 d3.tsv("ipcc-authors.tsv", function (data) {
 
+    // from nada (CC0)
+    /*
+      Run given function for each item in given array,
+      including items with null and undefined values
+
+      Parameters:
+        array - array, the array to iterate
+        callback - function( item, offset ), the callback called at each offset,
+                   with the item value and current offset provided as arguments.
+                   If the callback returns true, the iteration is interrupted and
+                   following items will not be processed.
+
+      Returns:
+        boolean, true when the iteration has been interrupted by a callback,
+        false otherwise
+
+      Notes:
+      * items are processed in ascending order of offset, from 0 to the initial
+      length of the array at the time of the call to forEach()
+      * in case items are deleted, updated or inserted, the current value of each
+      item at the current offset at the time of the call to the callback will be
+      provided to the callback
+    */
+    function forEach( array, callback ) {
+      var
+        isBreak = false,
+        i,
+        length = array.length;
+
+      for ( i = 0; i < length && !isBreak ; i++ ){
+        isBreak = callback( array[ i ], i ) === true;
+      }
+
+      return isBreak;
+    }
+
+    // from nadasurf (CC0)
+    /*
+      Apply a function to all the elements in a list
+
+      Parameters:
+        array - array, the list of items to process
+        operation - function( value, offset ), the function to apply to each item,
+                    called with the value and offset of each item. The result of
+                    the operation is stored at the same offset in result array.
+
+      Returns:
+        array, the list of results of the operation applied to each item
+        of the given array.
+    */
+    function map( array, operation ) {
+      var result = Array( array.length );
+
+      forEach( array, function( item, i ) {
+        result[ i ] = operation( item, i );
+      });
+
+      return result;
+    }
+
+    function parseContributionCode (contributionCode) {
+      var
+        parts = contributionCode.split('.'),
+
+        ASSESSMENT_REPORT = 0,
+        WORKING_GROUP = 1,
+        ROLE = 2,
+        INSTITUTION_ID = 3,
+        INSTITUTION_COUNTRY_ID = 4,
+        CONTRIBUTIONS_NUMBER = 5,
+
+        WORKING_GROUP_NAMES = {
+          1: 'I',
+          2: 'II',
+          3: 'III'
+        },
+
+        ROLE_NAMES = {
+          1: 'CLA',
+          2: 'LA',
+          3: 'RE',
+          4: 'CA'
+        };
+
+      return {
+        ar: parts[ASSESSMENT_REPORT],
+        wg: WORKING_GROUP_NAMES[ parts[WORKING_GROUP] ],
+        role: ROLE_NAMES[ parts[ROLE] ],
+        institution: parts[INSTITUTION_ID],
+        country: parts[INSTITUTION_COUNTRY_ID],
+        // remove 'x' (multiplication sign) before contributions number
+        contributions: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
+      };
+    }
+
+    function parseContributions (tsvContributions) {
+      // remove starting '[' and ending ']'
+      var contributionCodes = tsvContributions.slice(1,-1)
+        // split items separated by '|'
+        .split('|');
+
+      return map(contributionCodes, parseContributionCode);
+    }
+
     /* since its a TSV file we need to format the data a bit */
     data.forEach(function (d) {
-        d.total_contributions = Number(d.total_contributions);
+      d.contributions = parseContributions(d.contributions);
+      d.total_contributions = Number(d.total_contributions);
     });
+
 });
 
 d3.csv("ndx.csv", function (data) {
