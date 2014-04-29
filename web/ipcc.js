@@ -45,6 +45,14 @@ var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 //d3.json("data.json", function(data) {...};
 //jQuery.getJson("data.json", function(data){...});
 //```
+d3.tsv("ipcc-authors.tsv", function (data) {
+
+    /* since its a TSV file we need to format the data a bit */
+    data.forEach(function (d) {
+        d.total_contributions = Number(d.total_contributions);
+    });
+});
+
 d3.csv("ndx.csv", function (data) {
     /* since its a csv file we need to format the data a bit */
     var dateFormat = d3.time.format("%m/%d/%Y");
