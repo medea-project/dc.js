@@ -12,7 +12,7 @@ var totalAssessmentReportChart = dc.barChart("#total-assessment-report-chart");
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var workingGroupsChart = dc.rowChart("#working-groups-chart");
 var chaptersChart = dc.lineChart("#chapters-chart");
-var volumeChart = dc.barChart("#monthly-volume-chart");
+var assessmentReportsChart = dc.barChart("#assessment-reports-chart");
 var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 
 // ### Anchor Div for Charts
@@ -345,7 +345,7 @@ d3.csv("ndx.csv", function (data) {
         .dimension(moveMonths)
         .mouseZoomable(true)
         // Specify a range chart to link the brush extent of the range with the zoom focue of the current chart.
-        .rangeChart(volumeChart)
+        .rangeChart(assessmentReportsChart)
         .x(d3.time.scale().domain([new Date(1985, 0, 1), new Date(2012, 11, 31)]))
         .round(d3.time.month.round)
         .xUnits(d3.time.months)
@@ -371,7 +371,7 @@ d3.csv("ndx.csv", function (data) {
             return dateFormat(d.key) + "\n" + numberFormat(value);
         });
 
-    volumeChart.width(990)
+    assessmentReportsChart.width(990)
         .height(40)
         .margins({top: 0, right: 50, bottom: 20, left: 40})
         .dimension(moveMonths)
