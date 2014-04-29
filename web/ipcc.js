@@ -7,13 +7,13 @@
 // ### Create Chart Objects
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
-var gainOrLossChart = dc.pieChart("#gain-loss-chart");
-var fluctuationChart = dc.barChart("#fluctuation-chart");
-var quarterChart = dc.pieChart("#quarter-chart");
-var dayOfWeekChart = dc.rowChart("#day-of-week-chart");
-var moveChart = dc.lineChart("#monthly-move-chart");
+var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
+var totalAssessmentReportChart = dc.barChart("#total-assessment-report-chart");
+var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
+var workingGroupsChart = dc.rowChart("#working-groups-chart");
+var chaptersChart = dc.lineChart("#chapters-chart");
 var volumeChart = dc.barChart("#monthly-volume-chart");
-var yearlyBubbleChart = dc.bubbleChart("#yearly-bubble-chart");
+var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 
 // ### Anchor Div for Charts
 /*
@@ -177,8 +177,8 @@ d3.csv("ndx.csv", function (data) {
     //an optional chart group for this chart to be scoped within. When a chart belongs
     //to a specific group then any interaction with such chart will only trigger redraw
     //on other charts within the same chart group.
-    /* dc.bubbleChart("#yearly-bubble-chart", "chartGroup") */
-    yearlyBubbleChart
+    /* dc.bubbleChart("#country-groups-chart", "chartGroup") */
+    countryGroupsChart
         .width(990) // (optional) define chart width, :default = 200
         .height(250)  // (optional) define chart height, :default = 200
         .transitionDuration(1500) // (optional) define chart transition duration, :default = 750
@@ -249,7 +249,7 @@ d3.csv("ndx.csv", function (data) {
     // to a specific group then any interaction with such chart will only trigger redraw
     // on other charts within the same chart group.
 
-    gainOrLossChart
+    rolesOfResponsibilityChart
         .width(180) // (optional) define chart width, :default = 200
         .height(180) // (optional) define chart height, :default = 200
         .radius(80) // define pie radius
@@ -258,7 +258,7 @@ d3.csv("ndx.csv", function (data) {
         /* (optional) by default pie chart will use group.key as it's label
          * but you can overwrite it with a closure */
         .label(function (d) {
-            if (gainOrLossChart.hasFilter() && !gainOrLossChart.hasFilter(d.key))
+            if (rolesOfResponsibilityChart.hasFilter() && !rolesOfResponsibilityChart.hasFilter(d.key))
                 return d.key + "(0%)";
             return d.key + "(" + Math.floor(d.value / all.value() * 100) + "%)";
         }) /*
@@ -276,7 +276,7 @@ d3.csv("ndx.csv", function (data) {
         .colorAccessor(function(d, i){return d.value;})
         */;
 
-    quarterChart.width(180)
+    distinctRolesChart.width(180)
         .height(180)
         .radius(80)
         .innerRadius(30)
@@ -284,7 +284,7 @@ d3.csv("ndx.csv", function (data) {
         .group(quarterGroup);
 
     //#### Row Chart
-    dayOfWeekChart.width(180)
+    workingGroupsChart.width(180)
         .height(180)
         .margins({top: 20, left: 10, right: 10, bottom: 20})
         .group(dayOfWeekGroup)
@@ -307,7 +307,7 @@ d3.csv("ndx.csv", function (data) {
     // to a specific group then any interaction with such chart will only trigger redraw
     // on other charts within the same chart group.
     /* dc.barChart("#volume-month-chart") */
-    fluctuationChart.width(420)
+    totalAssessmentReportChart.width(420)
         .height(180)
         .margins({top: 10, right: 50, bottom: 30, left: 40})
         .dimension(fluctuation)
@@ -330,13 +330,13 @@ d3.csv("ndx.csv", function (data) {
         });
 
     // Customize axis
-    fluctuationChart.xAxis().tickFormat(
+    totalAssessmentReportChart.xAxis().tickFormat(
         function (v) { return v + "%"; });
-    fluctuationChart.yAxis().ticks(5);
+    totalAssessmentReportChart.yAxis().ticks(5);
 
     //#### Stacked Area Chart
     //Specify an area chart, by using a line chart with `.renderArea(true)`
-    moveChart
+    chaptersChart
         .renderArea(true)
         .width(990)
         .height(200)
