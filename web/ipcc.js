@@ -49,6 +49,20 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
     // from nada (CC0)
     /*
+      Identity Function: return the given argument
+
+      Parameter:
+        value - any value
+
+      Returns:
+        the same value provided as parameter
+    */
+    function identity( value ) {
+      return value;
+    }
+
+    // from nada (CC0)
+    /*
       Run given function for each item in given array,
       including items with null and undefined values
 
@@ -144,18 +158,94 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
     function parseContributions (tsvContributions) {
       // remove starting '[' and ending ']'
-      var contributionCodes = tsvContributions.slice(1,-1)
+      return tsvContributions.slice(1,-1)
         // split items separated by '|'
         .split('|');
-
-      return map(contributionCodes, parseContributionCode);
     }
 
     /* since its a TSV file we need to format the data a bit */
     data.forEach(function (d) {
-      d.contributions = parseContributions(d.contributions);
+      d.name = d.first_name + ' ' + d.last_name;
+      d.contribution_codes = parseContributions(d.contributions);
+      d.contributions = map(d.contribution_codes, parseContributionCode);
       d.total_contributions = Number(d.total_contributions);
     });
+
+    //### Create Crossfilter Dimensions and Groups
+    //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
+    var authors = crossfilter(data);
+    var all = authors.groupAll();
+
+    // dimension by author id
+    var authorDimension = authors.dimension(function (d) {
+        return d.id;
+    });
+
+    /*
+    //#### Data Count
+    // Create a data count widget and use the given css selector as anchor. You can also specify
+    // an optional chart group for this chart to be scoped within. When a chart belongs
+    // to a specific group then any interaction with such chart will only trigger redraw
+    // on other charts within the same chart group.
+    <div id="data-count">
+        <span class="filter-count"></span> selected out of <span class="total-count"></span> records
+    </div>
+    */
+    dc.dataCount(".dc-data-count")
+        .dimension(authors)
+        .group(all);
+
+    /*
+    //#### Data Table
+    // Create a data table widget and use the given css selector as anchor. You can also specify
+    // an optional chart group for this chart to be scoped within. When a chart belongs
+    // to a specific group then any interaction with such chart will only trigger redraw
+    // on other charts within the same chart group.
+    <!-- anchor div for data table -->
+    <div id="data-table">
+        <!-- create a custom header -->
+        <div class="header">
+            <span>Date</span>
+            <span>Open</span>
+            <span>Close</span>
+            <span>Change</span>
+            <span>Volume</span>
+        </div>
+        <!-- data rows will filled in here -->
+    </div>
+    */
+    dc.dataTable(".dc-data-table")
+        .dimension(authorDimension)
+        .group(identity)
+        .size(10) // (optional) max number of records to be shown, :default = 25
+        // dynamic columns creation using an array of closures
+        .columns([
+            function (d) {
+                return d.name;
+            },
+            function (d) {
+                return d.total_assessment_reports;
+            },
+            function (d) {
+                return d.total_working_groups;
+            },
+            function (d) {
+                return d.total_contributions;
+            },
+            function (d) {
+                return d.contribution_codes;
+            }
+        ])
+        // (optional) sort using the given field, :default = function(d){return d;}
+        .sortBy(function (d) {
+            return d.total_contributions;
+        })
+        // (optional) sort order, :default ascending
+        .order(d3.descending)
+        // (optional) custom renderlet to post-process chart using D3
+        .renderlet(function (table) {
+            table.selectAll(".dc-table-group").classed("info", true);
+        });
 
 });
 
@@ -496,77 +586,6 @@ d3.csv("ndx.csv", function (data) {
         .round(d3.time.month.round)
         .alwaysUseRounding(true)
         .xUnits(d3.time.months);
-
-    /*
-    //#### Data Count
-    // Create a data count widget and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-    <div id="data-count">
-        <span class="filter-count"></span> selected out of <span class="total-count"></span> records
-    </div>
-    */
-    dc.dataCount(".dc-data-count")
-        .dimension(ndx)
-        .group(all);
-
-    /*
-    //#### Data Table
-    // Create a data table widget and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-    <!-- anchor div for data table -->
-    <div id="data-table">
-        <!-- create a custom header -->
-        <div class="header">
-            <span>Date</span>
-            <span>Open</span>
-            <span>Close</span>
-            <span>Change</span>
-            <span>Volume</span>
-        </div>
-        <!-- data rows will filled in here -->
-    </div>
-    */
-    dc.dataTable(".dc-data-table")
-        .dimension(dateDimension)
-        // data table does not use crossfilter group but rather a closure
-        // as a grouping function
-        .group(function (d) {
-            var format = d3.format("02d");
-            return d.dd.getFullYear() + "/" + format((d.dd.getMonth() + 1));
-        })
-        .size(10) // (optional) max number of records to be shown, :default = 25
-        // dynamic columns creation using an array of closures
-        .columns([
-            function (d) {
-                return d.date;
-            },
-            function (d) {
-                return numberFormat(d.open);
-            },
-            function (d) {
-                return numberFormat(d.close);
-            },
-            function (d) {
-                return numberFormat(d.close - d.open);
-            },
-            function (d) {
-                return d.volume;
-            }
-        ])
-        // (optional) sort using the given field, :default = function(d){return d;}
-        .sortBy(function (d) {
-            return d.dd;
-        })
-        // (optional) sort order, :default ascending
-        .order(d3.ascending)
-        // (optional) custom renderlet to post-process chart using D3
-        .renderlet(function (table) {
-            table.selectAll(".dc-table-group").classed("info", true);
-        });
 
     /*
     //#### Geo Choropleth Chart
