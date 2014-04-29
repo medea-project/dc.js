@@ -121,6 +121,90 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return result;
     }
 
+    // from nada (CC0)
+    /*
+      Wrap a function in a closure that configures given object as context
+
+      Parameters:
+        func - function, the function to wrap
+        object - object, the object to provide as 'this' for the function
+
+      Returns:
+        function, a closure that calls the given function with provided parameters,
+        with the given object configured as 'this', and returns the same value.
+
+      Note:
+      This function calls the apply() method of the given function, and its
+      behavior changes depending on whether the function is in strict mode.
+
+      When the provided function is not in strict mode:
+
+        1) a null argument for context object defaults to the global object
+        2) automatic boxing of arguments is performed
+
+        Reference:
+        https://developer.mozilla.org/en-US/docs/JavaScript/Reference
+          /Functions_and_function_scope/Strict_mode#.22Securing.22_JavaScript
+    */
+    function bind( func, object ) {
+      return function() {
+        return func.apply( object, arguments );
+      };
+    }
+
+    // from nadasurf (CC0)
+    /*
+      Define an alias for a (Native prototype) function
+
+      The alias allows to call the function with the context object
+      as first argument, followed with regular arguments of the function.
+
+      Example:
+        var has = alias( Object.prototype.hasOwnProperty );
+        has( object, name ) === object.hasOwnProperty( name ); // true
+
+      Parameter:
+        func - function, a method part of the prototype of a Constructor
+
+      Dependency:
+        nada/bind.js
+    */
+    function alias( func ) {
+      return bind( func.call, func );
+    }
+
+    // from nadasurf (CC0)
+    var hasOwnProperty = alias( Object.prototype.hasOwnProperty );
+
+    // from nadasurf (CC0)
+    /*
+      Run given function for each property of given object matching the filter,
+      skipping inherited properties
+
+      Parameters:
+        object - object, the object to iterate
+        callback - function( value, name ): boolean, the callback called for each
+                   property owned by the object (not inherited), with property
+                   value and name provided as arguments.
+
+      Notes:
+        * properties are iterated in no particular order
+        * whether properties deleted or added during the iteration are iterated
+          or not is unspecified
+    */
+    function forEachProperty( object, callback ) {
+      var
+        name,
+        value;
+
+      for ( name in object ) {
+        if ( hasOwnProperty( object, name ) ) {
+          value = object[name];
+          callback( value, name );
+        }
+      }
+    }
+
     function parseContributionCode (contributionCode) {
       var
         parts = contributionCode.split('.'),
@@ -152,7 +236,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
         institution: parts[INSTITUTION_ID],
         country: parts[INSTITUTION_COUNTRY_ID],
         // remove 'x' (multiplication sign) before contributions number
-        contributions: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
+        count: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
       };
     }
 
@@ -163,12 +247,40 @@ d3.tsv("ipcc-authors.tsv", function (data) {
         .split('|');
     }
 
+    function getWorkingGroups (contributions) {
+      var workingGroups = {};
+      forEach( contributions, function (contribution) {
+        workingGroups[ contribution.wg ] = true;
+      });
+      return workingGroups;
+    }
+
+    function getAssessmentReports (contributions) {
+      var assessmentReports = {};
+      forEach( contributions, function (contribution) {
+        assessmentReports[ contribution.ar ] = true;
+      });
+      return assessmentReports;
+    }
+
+    function countProperties (object) {
+      var count = 0;
+      forEachProperty( object, function() {
+        count++;
+      });
+      return count;
+    }
+
     /* since its a TSV file we need to format the data a bit */
     data.forEach(function (d) {
       d.name = d.first_name + ' ' + d.last_name;
       d.contribution_codes = parseContributions(d.contributions);
       d.contributions = map(d.contribution_codes, parseContributionCode);
       d.total_contributions = Number(d.total_contributions);
+      d.working_groups = getWorkingGroups(d.contributions);
+      d.total_working_groups = countProperties(d.working_groups);
+      d.assessment_reports = getAssessmentReports(d.contributions);
+      d.total_assessment_reports = countProperties(d.assessment_reports);
     });
 
     //### Create Crossfilter Dimensions and Groups
@@ -216,7 +328,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     */
     dc.dataTable(".dc-data-table")
         .dimension(authorDimension)
-        .group(identity)
+        .group(function(){
+          return 'Authors';
+        })
         .size(10) // (optional) max number of records to be shown, :default = 25
         // dynamic columns creation using an array of closures
         .columns([
@@ -233,7 +347,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
                 return d.total_contributions;
             },
             function (d) {
-                return d.contribution_codes;
+                return d.contribution_codes.join(", ");
             }
         ])
         // (optional) sort using the given field, :default = function(d){return d;}
