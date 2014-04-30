@@ -283,6 +283,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
 
+  var total_authors = data.length;
+
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var authors = crossfilter(data);
@@ -331,7 +333,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .group(function(d){
       return d.total_assessment_reports + " Assessment Reports";
     })
-    .size(4390) // (optional) max number of records to be shown, :default = 25
+    // display all authors
+    .size(total_authors) // (optional) max number of records to be shown, :default = 25
     // dynamic columns creation using an array of closures
     .columns([
       function (d) {
