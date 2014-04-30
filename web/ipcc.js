@@ -289,10 +289,21 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var total_authors = authors.size();
   var all = authors.groupAll();
 
+  // utility function to replace the common pattern
+  // function (d) {
+  //   return d.name;
+  // }
+  // with
+  // getter('name')
+  function getter(name) {
+    return function (d) {
+      return d[name];
+    };
+  }
+
   // dimension by author id
-  var authorDimension = authors.dimension(function (d) {
-    return d.id;
-  });
+  var authorDimension =
+    authors.dimension( getter('id') );
 
   /*
   //#### Data Count
@@ -336,26 +347,16 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .size(total_authors) // (optional) max number of records to be shown, :default = 25
     // dynamic columns creation using an array of closures
     .columns([
-      function (d) {
-        return d.name;
-      },
-      function (d) {
-        return d.total_assessment_reports;
-      },
-      function (d) {
-        return d.total_working_groups;
-      },
-      function (d) {
-        return d.total_contributions;
-      },
+      getter('name'),
+      getter('total_assessment_reports'),
+      getter('total_working_groups'),
+      getter('total_contributions'),
       function (d) {
         return d.contribution_codes.join(", ");
       }
     ])
     // (optional) sort using the given field, :default = function(d){return d;}
-    .sortBy(function (d) {
-      return d.total_contributions;
-    })
+    .sortBy( getter('total_contributions') )
     // (optional) sort order, :default ascending
     .order(d3.descending)
     // (optional) custom renderlet to post-process chart using D3
