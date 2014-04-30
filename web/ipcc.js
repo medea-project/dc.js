@@ -8,7 +8,7 @@
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
-var totalAssessmentReportsChart = dc.barChart("#total-assessment-report-chart");
+var totalAssessmentReportsChart;
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var workingGroupsChart = dc.rowChart("#working-groups-chart");
 var chaptersChart = dc.lineChart("#chapters-chart");
@@ -305,6 +305,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var authorDimension =
     authors.dimension( getter('id') );
 
+  // dimension and group by total assessment reports
+  var totalAssessmentReportsDimension =
+    authors.dimension( getter('total_assessment_reports') );
+  var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
+
   /*
   //#### Data Count
   // Create a data count widget and use the given css selector as anchor. You can also specify
@@ -363,6 +368,47 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .renderlet(function (table) {
       table.selectAll(".dc-table-group").classed("info", true);
     });
+
+  //#### Bar Chart
+  // Create a bar chart and use the given css selector as anchor. You can also specify
+  // an optional chart group for this chart to be scoped within. When a chart belongs
+  // to a specific group then any interaction with such chart will only trigger redraw
+  // on other charts within the same chart group.
+  /* dc.barChart("#volume-month-chart") */
+  totalAssessmentReportsChart =
+    dc.barChart("#total-assessment-report-chart", "ipcc-authors");
+  totalAssessmentReportsChart.width(420)
+    .height(180)
+    .margins({top: 10, right: 50, bottom: 30, left: 40})
+    .dimension(totalAssessmentReportsDimension)
+    .group(totalAssessmentReportsGroup)
+    .elasticY(true)
+    // (optional) whether bar should be center to its x value. Not needed for ordinal chart, :default=false
+    //.centerBar(true)
+    // (optional) set gap between bars manually in px, :default=2
+    .gap(0)
+    // (optional) set filter brush rounding
+    .round(dc.round.floor)
+    .alwaysUseRounding(true)
+    .x( d3.scale.linear().domain([1,6]).range([0,420]) )
+    .renderHorizontalGridLines(true)
+    // customize the filter displayed in the control span
+    .filterPrinter(function (filters) {
+      var
+        filter = filters[0],
+        start = filter[0],
+        end = filter[1] - 1;
+
+      if ( start === end ) {
+        return "total AR = " + start;
+      } else {
+        return filter[0] + " <= total AR <= " + end;
+      }
+    });
+
+  // Customize axis
+  totalAssessmentReportsChart.xAxis().ticks(5);
+  totalAssessmentReportsChart.yAxis().ticks(5);
 
   //#### Rendering
   //simply call renderAll() to render all charts on the page
@@ -631,39 +677,6 @@ d3.csv("ndx.csv", function (data) {
         })
         .elasticX(true)
         .xAxis().ticks(4);
-
-    //#### Bar Chart
-    // Create a bar chart and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-    /* dc.barChart("#volume-month-chart") */
-    totalAssessmentReportsChart.width(420)
-        .height(180)
-        .margins({top: 10, right: 50, bottom: 30, left: 40})
-        .dimension(fluctuation)
-        .group(fluctuationGroup)
-        .elasticY(true)
-        // (optional) whether bar should be center to its x value. Not needed for ordinal chart, :default=false
-        .centerBar(true)
-        // (optional) set gap between bars manually in px, :default=2
-        .gap(1)
-        // (optional) set filter brush rounding
-        .round(dc.round.floor)
-        .alwaysUseRounding(true)
-        .x(d3.scale.linear().domain([-25, 25]))
-        .renderHorizontalGridLines(true)
-        // customize the filter displayed in the control span
-        .filterPrinter(function (filters) {
-            var filter = filters[0], s = "";
-            s += numberFormat(filter[0]) + "% -> " + numberFormat(filter[1]) + "%";
-            return s;
-        });
-
-    // Customize axis
-    totalAssessmentReportsChart.xAxis().tickFormat(
-        function (v) { return v + "%"; });
-    totalAssessmentReportsChart.yAxis().ticks(5);
 
     //#### Stacked Area Chart
     //Specify an area chart, by using a line chart with `.renderArea(true)`
