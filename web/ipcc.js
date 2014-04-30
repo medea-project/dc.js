@@ -303,7 +303,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     <span class="filter-count"></span> selected out of <span class="total-count"></span> records
   </div>
   */
-  dc.dataCount(".dc-data-count")
+  dc.dataCount(".dc-data-count", "ipcc-authors")
     .dimension(authors)
     .group(all);
 
@@ -326,7 +326,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     <!-- data rows will filled in here -->
   </div>
   */
-  dc.dataTable(".dc-data-table")
+  dc.dataTable(".dc-data-table", "ipcc-authors")
     .dimension(authorDimension)
     .group(function(){
       return 'Authors';
@@ -361,6 +361,16 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       table.selectAll(".dc-table-group").classed("info", true);
     });
 
+  //#### Rendering
+  //simply call renderAll() to render all charts on the page
+  // dc.renderAll();
+  // or you can render charts belong to a specific chart group
+  dc.renderAll("ipcc-authors");
+  // once rendered you can call redrawAll to update charts incrementally when data
+  // change without re-rendering everything
+  // dc.redrawAll();
+  // or you can choose to redraw only those charts associated with a specific chart group
+  // dc.redrawAll("group");
 });
 
 d3.csv("ndx.csv", function (data) {
