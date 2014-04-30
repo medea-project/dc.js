@@ -283,11 +283,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
 
-  var total_authors = data.length;
-
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var authors = crossfilter(data);
+  var total_authors = authors.size();
   var all = authors.groupAll();
 
   // dimension by author id
