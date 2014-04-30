@@ -378,7 +378,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   totalAssessmentReportsChart =
     dc.barChart("#total-assessment-report-chart", "ipcc-authors");
   totalAssessmentReportsChart.width(420)
-    .height(180)
+    .height(420)
     .margins({top: 10, right: 50, bottom: 30, left: 40})
     .dimension(totalAssessmentReportsDimension)
     .group(totalAssessmentReportsGroup)
