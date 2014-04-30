@@ -440,7 +440,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .dimension(cumulatedWorkingGroupDimension)
     .group(cumulatedWorkingGroupGroup)
     // assign colors to each value in the x scale domain
-    .ordinalColors(['#3182bd', '#6baed6', '#9ecae1'])
+    .ordinalColors(
+      ['#FF0000','#FF00FF','#000000','#FFFF00','#0000FF','#00FFFF','#00FF00']
+    )
     .label(function (d) {
         return "WG " + d.key;
     })
