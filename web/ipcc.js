@@ -385,25 +385,27 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     //.y( d3.scale.log().domain([1,total_authors]).range([0,180]) )
     .elasticY(true)
     // (optional) whether bar should be center to its x value. Not needed for ordinal chart, :default=false
-    //.centerBar(true)
+    .centerBar(true)
     // (optional) set gap between bars manually in px, :default=2
     .gap(0)
     // (optional) set filter brush rounding
-    .round(dc.round.floor)
+    .round(function(v){
+      return Math.floor(v) + 0.5;
+    })
     .alwaysUseRounding(true)
-    .x( d3.scale.linear().domain([1,6]).range([0,420]) )
+    .x( d3.scale.linear().domain([0.5,5.5]).range([0,420]) )
     .renderHorizontalGridLines(true)
     // customize the filter displayed in the control span
     .filterPrinter(function (filters) {
       var
         filter = filters[0],
-        start = filter[0],
-        end = filter[1] - 1;
+        start = filter[0] + 0.5,
+        end = filter[1] - 0.5;
 
       if ( start === end ) {
-        return "total AR = " + start;
+        return "Total AR = " + start;
       } else {
-        return filter[0] + " <= total AR <= " + end;
+        return start + " <= Total AR <= " + end;
       }
     });
 
