@@ -10,7 +10,7 @@
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
 var totalAssessmentReportsChart;
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
-var workingGroupsChart = dc.rowChart("#working-groups-chart");
+var workingGroupsChart;
 var chaptersChart = dc.lineChart("#chapters-chart");
 var assessmentReportsChart = dc.barChart("#assessment-reports-chart");
 var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
@@ -255,6 +255,19 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     return workingGroups;
   }
 
+  function getCumulatedWorkingGroup( workingGroups ) {
+    var
+      cumulatedWorkingGroup = "",
+      separator = "";
+    forEach(["I","II","III"], function (wg) {
+      if ( workingGroups[wg] === true ) {
+        cumulatedWorkingGroup += separator + wg;
+        separator = "+";
+      }
+    });
+    return cumulatedWorkingGroup;
+  }
+
   function getAssessmentReports (contributions) {
     var assessmentReports = {};
     forEach( contributions, function (contribution) {
@@ -278,6 +291,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.contributions = map(d.contribution_codes, parseContributionCode);
     d.total_contributions = Number(d.total_contributions);
     d.working_groups = getWorkingGroups(d.contributions);
+    d.cumulated_working_group = getCumulatedWorkingGroup(d.working_groups);
     d.total_working_groups = countProperties(d.working_groups);
     d.assessment_reports = getAssessmentReports(d.contributions);
     d.total_assessment_reports = countProperties(d.assessment_reports);
@@ -309,6 +323,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var totalAssessmentReportsDimension =
     authors.dimension( getter('total_assessment_reports') );
   var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
+
+  // dimension and group by working group
+  var cumulatedWorkingGroupDimension =
+    authors.dimension( getter('cumulated_working_group') );
+  var cumulatedWorkingGroupGroup = cumulatedWorkingGroupDimension.group();
 
   /*
   //#### Data Count
@@ -379,7 +398,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     dc.barChart("#total-assessment-report-chart", "ipcc-authors");
   totalAssessmentReportsChart.width(420)
     .height(420)
-    .margins({top: 10, right: 50, bottom: 30, left: 40})
+    .margins({top: 10, right: 10, bottom: 30, left: 10})
     .dimension(totalAssessmentReportsDimension)
     .group(totalAssessmentReportsGroup)
     //.y( d3.scale.log().domain([1,total_authors]).range([0,180]) )
@@ -412,6 +431,31 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   // Customize axis
   totalAssessmentReportsChart.xAxis().ticks(5);
   totalAssessmentReportsChart.yAxis().ticks(5);
+
+  //#### Row Chart
+  workingGroupsChart = dc.rowChart("#working-groups-chart", "ipcc-authors");
+  workingGroupsChart.width(180)
+    .height(420)
+    .margins({top: 10, left: 10, right: 10, bottom: 30})
+    .dimension(cumulatedWorkingGroupDimension)
+    .group(cumulatedWorkingGroupGroup)
+    // assign colors to each value in the x scale domain
+    .ordinalColors(['#3182bd', '#6baed6', '#9ecae1'])
+    .label(function (d) {
+        return "WG " + d.key;
+    })
+    // the x offset (horizontal space to the top left corner of a row)
+    // for labels on a particular row chart. Default x offset is 10px;
+    .labelOffsetX(10)
+    // the y offset (vertical space to the top left corner of a row)
+    // for labels on a particular row chart. Default y offset is 15px;
+    .labelOffsetY(30)
+    // title sets the row text
+    .title(function (d) {
+        return "WG " + d.key + " (" + d.value + " authors)";
+    })
+    .elasticX(true)
+    .xAxis().ticks(4);
 
   //#### Rendering
   //simply call renderAll() to render all charts on the page
@@ -662,24 +706,6 @@ d3.csv("ndx.csv", function (data) {
         .innerRadius(30)
         .dimension(quarter)
         .group(quarterGroup);
-
-    //#### Row Chart
-    workingGroupsChart.width(180)
-        .height(180)
-        .margins({top: 20, left: 10, right: 10, bottom: 20})
-        .group(dayOfWeekGroup)
-        .dimension(dayOfWeek)
-        // assign colors to each value in the x scale domain
-        .ordinalColors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
-        .label(function (d) {
-            return d.key.split(".")[1];
-        })
-        // title sets the row text
-        .title(function (d) {
-            return d.value;
-        })
-        .elasticX(true)
-        .xAxis().ticks(4);
 
     //#### Stacked Area Chart
     //Specify an area chart, by using a line chart with `.renderArea(true)`
