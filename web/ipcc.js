@@ -328,10 +328,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   */
   dc.dataTable(".dc-data-table", "ipcc-authors")
     .dimension(authorDimension)
-    .group(function(){
-      return 'Authors';
+    .group(function(d){
+      return d.total_assessment_reports + " Assessment Reports";
     })
-    .size(100) // (optional) max number of records to be shown, :default = 25
+    .size(4390) // (optional) max number of records to be shown, :default = 25
     // dynamic columns creation using an array of closures
     .columns([
       function (d) {
