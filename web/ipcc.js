@@ -47,319 +47,319 @@ var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 //```
 d3.tsv("ipcc-authors.tsv", function (data) {
 
-    // from nada (CC0)
-    /*
-      Identity Function: return the given argument
+  // from nada (CC0)
+  /*
+    Identity Function: return the given argument
 
-      Parameter:
-        value - any value
+    Parameter:
+      value - any value
 
-      Returns:
-        the same value provided as parameter
-    */
-    function identity( value ) {
-      return value;
+    Returns:
+      the same value provided as parameter
+  */
+  function identity( value ) {
+    return value;
+  }
+
+  // from nada (CC0)
+  /*
+    Run given function for each item in given array,
+    including items with null and undefined values
+
+    Parameters:
+      array - array, the array to iterate
+      callback - function( item, offset ), the callback called at each offset,
+                 with the item value and current offset provided as arguments.
+                 If the callback returns true, the iteration is interrupted and
+                 following items will not be processed.
+
+    Returns:
+      boolean, true when the iteration has been interrupted by a callback,
+      false otherwise
+
+    Notes:
+    * items are processed in ascending order of offset, from 0 to the initial
+    length of the array at the time of the call to forEach()
+    * in case items are deleted, updated or inserted, the current value of each
+    item at the current offset at the time of the call to the callback will be
+    provided to the callback
+  */
+  function forEach( array, callback ) {
+    var
+      isBreak = false,
+      i,
+      length = array.length;
+
+    for ( i = 0; i < length && !isBreak ; i++ ){
+      isBreak = callback( array[ i ], i ) === true;
     }
 
-    // from nada (CC0)
-    /*
-      Run given function for each item in given array,
-      including items with null and undefined values
+    return isBreak;
+  }
 
-      Parameters:
-        array - array, the array to iterate
-        callback - function( item, offset ), the callback called at each offset,
-                   with the item value and current offset provided as arguments.
-                   If the callback returns true, the iteration is interrupted and
-                   following items will not be processed.
+  // from nadasurf (CC0)
+  /*
+    Apply a function to all the elements in a list
 
-      Returns:
-        boolean, true when the iteration has been interrupted by a callback,
-        false otherwise
+    Parameters:
+      array - array, the list of items to process
+      operation - function( value, offset ), the function to apply to each item,
+                  called with the value and offset of each item. The result of
+                  the operation is stored at the same offset in result array.
 
-      Notes:
-      * items are processed in ascending order of offset, from 0 to the initial
-      length of the array at the time of the call to forEach()
-      * in case items are deleted, updated or inserted, the current value of each
-      item at the current offset at the time of the call to the callback will be
-      provided to the callback
-    */
-    function forEach( array, callback ) {
-      var
-        isBreak = false,
-        i,
-        length = array.length;
+    Returns:
+      array, the list of results of the operation applied to each item
+      of the given array.
+  */
+  function map( array, operation ) {
+    var result = Array( array.length );
 
-      for ( i = 0; i < length && !isBreak ; i++ ){
-        isBreak = callback( array[ i ], i ) === true;
-      }
-
-      return isBreak;
-    }
-
-    // from nadasurf (CC0)
-    /*
-      Apply a function to all the elements in a list
-
-      Parameters:
-        array - array, the list of items to process
-        operation - function( value, offset ), the function to apply to each item,
-                    called with the value and offset of each item. The result of
-                    the operation is stored at the same offset in result array.
-
-      Returns:
-        array, the list of results of the operation applied to each item
-        of the given array.
-    */
-    function map( array, operation ) {
-      var result = Array( array.length );
-
-      forEach( array, function( item, i ) {
-        result[ i ] = operation( item, i );
-      });
-
-      return result;
-    }
-
-    // from nada (CC0)
-    /*
-      Wrap a function in a closure that configures given object as context
-
-      Parameters:
-        func - function, the function to wrap
-        object - object, the object to provide as 'this' for the function
-
-      Returns:
-        function, a closure that calls the given function with provided parameters,
-        with the given object configured as 'this', and returns the same value.
-
-      Note:
-      This function calls the apply() method of the given function, and its
-      behavior changes depending on whether the function is in strict mode.
-
-      When the provided function is not in strict mode:
-
-        1) a null argument for context object defaults to the global object
-        2) automatic boxing of arguments is performed
-
-        Reference:
-        https://developer.mozilla.org/en-US/docs/JavaScript/Reference
-          /Functions_and_function_scope/Strict_mode#.22Securing.22_JavaScript
-    */
-    function bind( func, object ) {
-      return function() {
-        return func.apply( object, arguments );
-      };
-    }
-
-    // from nadasurf (CC0)
-    /*
-      Define an alias for a (Native prototype) function
-
-      The alias allows to call the function with the context object
-      as first argument, followed with regular arguments of the function.
-
-      Example:
-        var has = alias( Object.prototype.hasOwnProperty );
-        has( object, name ) === object.hasOwnProperty( name ); // true
-
-      Parameter:
-        func - function, a method part of the prototype of a Constructor
-
-      Dependency:
-        nada/bind.js
-    */
-    function alias( func ) {
-      return bind( func.call, func );
-    }
-
-    // from nadasurf (CC0)
-    var hasOwnProperty = alias( Object.prototype.hasOwnProperty );
-
-    // from nadasurf (CC0)
-    /*
-      Run given function for each property of given object matching the filter,
-      skipping inherited properties
-
-      Parameters:
-        object - object, the object to iterate
-        callback - function( value, name ): boolean, the callback called for each
-                   property owned by the object (not inherited), with property
-                   value and name provided as arguments.
-
-      Notes:
-        * properties are iterated in no particular order
-        * whether properties deleted or added during the iteration are iterated
-          or not is unspecified
-    */
-    function forEachProperty( object, callback ) {
-      var
-        name,
-        value;
-
-      for ( name in object ) {
-        if ( hasOwnProperty( object, name ) ) {
-          value = object[name];
-          callback( value, name );
-        }
-      }
-    }
-
-    function parseContributionCode (contributionCode) {
-      var
-        parts = contributionCode.split('.'),
-
-        ASSESSMENT_REPORT = 0,
-        WORKING_GROUP = 1,
-        ROLE = 2,
-        INSTITUTION_ID = 3,
-        INSTITUTION_COUNTRY_ID = 4,
-        CONTRIBUTIONS_NUMBER = 5,
-
-        WORKING_GROUP_NAMES = {
-          1: 'I',
-          2: 'II',
-          3: 'III'
-        },
-
-        ROLE_NAMES = {
-          1: 'CLA',
-          2: 'LA',
-          3: 'RE',
-          4: 'CA'
-        };
-
-      return {
-        ar: parts[ASSESSMENT_REPORT],
-        wg: WORKING_GROUP_NAMES[ parts[WORKING_GROUP] ],
-        role: ROLE_NAMES[ parts[ROLE] ],
-        institution: parts[INSTITUTION_ID],
-        country: parts[INSTITUTION_COUNTRY_ID],
-        // remove 'x' (multiplication sign) before contributions number
-        count: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
-      };
-    }
-
-    function parseContributions (tsvContributions) {
-      // remove starting '[' and ending ']'
-      return tsvContributions.slice(1,-1)
-        // split items separated by '|'
-        .split('|');
-    }
-
-    function getWorkingGroups (contributions) {
-      var workingGroups = {};
-      forEach( contributions, function (contribution) {
-        workingGroups[ contribution.wg ] = true;
-      });
-      return workingGroups;
-    }
-
-    function getAssessmentReports (contributions) {
-      var assessmentReports = {};
-      forEach( contributions, function (contribution) {
-        assessmentReports[ contribution.ar ] = true;
-      });
-      return assessmentReports;
-    }
-
-    function countProperties (object) {
-      var count = 0;
-      forEachProperty( object, function() {
-        count++;
-      });
-      return count;
-    }
-
-    /* since its a TSV file we need to format the data a bit */
-    data.forEach(function (d) {
-      d.name = d.first_name + ' ' + d.last_name;
-      d.contribution_codes = parseContributions(d.contributions);
-      d.contributions = map(d.contribution_codes, parseContributionCode);
-      d.total_contributions = Number(d.total_contributions);
-      d.working_groups = getWorkingGroups(d.contributions);
-      d.total_working_groups = countProperties(d.working_groups);
-      d.assessment_reports = getAssessmentReports(d.contributions);
-      d.total_assessment_reports = countProperties(d.assessment_reports);
+    forEach( array, function( item, i ) {
+      result[ i ] = operation( item, i );
     });
 
-    //### Create Crossfilter Dimensions and Groups
-    //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
-    var authors = crossfilter(data);
-    var all = authors.groupAll();
+    return result;
+  }
 
-    // dimension by author id
-    var authorDimension = authors.dimension(function (d) {
-        return d.id;
+  // from nada (CC0)
+  /*
+    Wrap a function in a closure that configures given object as context
+
+    Parameters:
+      func - function, the function to wrap
+      object - object, the object to provide as 'this' for the function
+
+    Returns:
+      function, a closure that calls the given function with provided parameters,
+      with the given object configured as 'this', and returns the same value.
+
+    Note:
+    This function calls the apply() method of the given function, and its
+    behavior changes depending on whether the function is in strict mode.
+
+    When the provided function is not in strict mode:
+
+      1) a null argument for context object defaults to the global object
+      2) automatic boxing of arguments is performed
+
+      Reference:
+      https://developer.mozilla.org/en-US/docs/JavaScript/Reference
+        /Functions_and_function_scope/Strict_mode#.22Securing.22_JavaScript
+  */
+  function bind( func, object ) {
+    return function() {
+      return func.apply( object, arguments );
+    };
+  }
+
+  // from nadasurf (CC0)
+  /*
+    Define an alias for a (Native prototype) function
+
+    The alias allows to call the function with the context object
+    as first argument, followed with regular arguments of the function.
+
+    Example:
+      var has = alias( Object.prototype.hasOwnProperty );
+      has( object, name ) === object.hasOwnProperty( name ); // true
+
+    Parameter:
+      func - function, a method part of the prototype of a Constructor
+
+    Dependency:
+      nada/bind.js
+  */
+  function alias( func ) {
+    return bind( func.call, func );
+  }
+
+  // from nadasurf (CC0)
+  var hasOwnProperty = alias( Object.prototype.hasOwnProperty );
+
+  // from nadasurf (CC0)
+  /*
+    Run given function for each property of given object matching the filter,
+    skipping inherited properties
+
+    Parameters:
+      object - object, the object to iterate
+      callback - function( value, name ): boolean, the callback called for each
+                 property owned by the object (not inherited), with property
+                 value and name provided as arguments.
+
+    Notes:
+      * properties are iterated in no particular order
+      * whether properties deleted or added during the iteration are iterated
+        or not is unspecified
+  */
+  function forEachProperty( object, callback ) {
+    var
+      name,
+      value;
+
+    for ( name in object ) {
+      if ( hasOwnProperty( object, name ) ) {
+        value = object[name];
+        callback( value, name );
+      }
+    }
+  }
+
+  function parseContributionCode (contributionCode) {
+    var
+      parts = contributionCode.split('.'),
+
+      ASSESSMENT_REPORT = 0,
+      WORKING_GROUP = 1,
+      ROLE = 2,
+      INSTITUTION_ID = 3,
+      INSTITUTION_COUNTRY_ID = 4,
+      CONTRIBUTIONS_NUMBER = 5,
+
+      WORKING_GROUP_NAMES = {
+        1: 'I',
+        2: 'II',
+        3: 'III'
+      },
+
+      ROLE_NAMES = {
+        1: 'CLA',
+        2: 'LA',
+        3: 'RE',
+        4: 'CA'
+      };
+
+    return {
+      ar: parts[ASSESSMENT_REPORT],
+      wg: WORKING_GROUP_NAMES[ parts[WORKING_GROUP] ],
+      role: ROLE_NAMES[ parts[ROLE] ],
+      institution: parts[INSTITUTION_ID],
+      country: parts[INSTITUTION_COUNTRY_ID],
+      // remove 'x' (multiplication sign) before contributions number
+      count: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
+    };
+  }
+
+  function parseContributions (tsvContributions) {
+    // remove starting '[' and ending ']'
+    return tsvContributions.slice(1,-1)
+      // split items separated by '|'
+      .split('|');
+  }
+
+  function getWorkingGroups (contributions) {
+    var workingGroups = {};
+    forEach( contributions, function (contribution) {
+      workingGroups[ contribution.wg ] = true;
     });
+    return workingGroups;
+  }
 
-    /*
-    //#### Data Count
-    // Create a data count widget and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-    <div id="data-count">
-        <span class="filter-count"></span> selected out of <span class="total-count"></span> records
-    </div>
-    */
-    dc.dataCount(".dc-data-count")
-        .dimension(authors)
-        .group(all);
+  function getAssessmentReports (contributions) {
+    var assessmentReports = {};
+    forEach( contributions, function (contribution) {
+      assessmentReports[ contribution.ar ] = true;
+    });
+    return assessmentReports;
+  }
 
-    /*
-    //#### Data Table
-    // Create a data table widget and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-    <!-- anchor div for data table -->
-    <div id="data-table">
-        <!-- create a custom header -->
-        <div class="header">
-            <span>Date</span>
-            <span>Open</span>
-            <span>Close</span>
-            <span>Change</span>
-            <span>Volume</span>
-        </div>
-        <!-- data rows will filled in here -->
+  function countProperties (object) {
+    var count = 0;
+    forEachProperty( object, function() {
+      count++;
+    });
+    return count;
+  }
+
+  /* since its a TSV file we need to format the data a bit */
+  data.forEach(function (d) {
+    d.name = d.first_name + ' ' + d.last_name;
+    d.contribution_codes = parseContributions(d.contributions);
+    d.contributions = map(d.contribution_codes, parseContributionCode);
+    d.total_contributions = Number(d.total_contributions);
+    d.working_groups = getWorkingGroups(d.contributions);
+    d.total_working_groups = countProperties(d.working_groups);
+    d.assessment_reports = getAssessmentReports(d.contributions);
+    d.total_assessment_reports = countProperties(d.assessment_reports);
+  });
+
+  //### Create Crossfilter Dimensions and Groups
+  //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
+  var authors = crossfilter(data);
+  var all = authors.groupAll();
+
+  // dimension by author id
+  var authorDimension = authors.dimension(function (d) {
+    return d.id;
+  });
+
+  /*
+  //#### Data Count
+  // Create a data count widget and use the given css selector as anchor. You can also specify
+  // an optional chart group for this chart to be scoped within. When a chart belongs
+  // to a specific group then any interaction with such chart will only trigger redraw
+  // on other charts within the same chart group.
+  <div id="data-count">
+    <span class="filter-count"></span> selected out of <span class="total-count"></span> records
+  </div>
+  */
+  dc.dataCount(".dc-data-count")
+    .dimension(authors)
+    .group(all);
+
+  /*
+  //#### Data Table
+  // Create a data table widget and use the given css selector as anchor. You can also specify
+  // an optional chart group for this chart to be scoped within. When a chart belongs
+  // to a specific group then any interaction with such chart will only trigger redraw
+  // on other charts within the same chart group.
+  <!-- anchor div for data table -->
+  <div id="data-table">
+    <!-- create a custom header -->
+    <div class="header">
+      <span>Date</span>
+      <span>Open</span>
+      <span>Close</span>
+      <span>Change</span>
+      <span>Volume</span>
     </div>
-    */
-    dc.dataTable(".dc-data-table")
-        .dimension(authorDimension)
-        .group(function(){
-          return 'Authors';
-        })
-        .size(100) // (optional) max number of records to be shown, :default = 25
-        // dynamic columns creation using an array of closures
-        .columns([
-            function (d) {
-                return d.name;
-            },
-            function (d) {
-                return d.total_assessment_reports;
-            },
-            function (d) {
-                return d.total_working_groups;
-            },
-            function (d) {
-                return d.total_contributions;
-            },
-            function (d) {
-                return d.contribution_codes.join(", ");
-            }
-        ])
-        // (optional) sort using the given field, :default = function(d){return d;}
-        .sortBy(function (d) {
-            return d.total_contributions;
-        })
-        // (optional) sort order, :default ascending
-        .order(d3.descending)
-        // (optional) custom renderlet to post-process chart using D3
-        .renderlet(function (table) {
-            table.selectAll(".dc-table-group").classed("info", true);
-        });
+    <!-- data rows will filled in here -->
+  </div>
+  */
+  dc.dataTable(".dc-data-table")
+    .dimension(authorDimension)
+    .group(function(){
+      return 'Authors';
+    })
+    .size(100) // (optional) max number of records to be shown, :default = 25
+    // dynamic columns creation using an array of closures
+    .columns([
+      function (d) {
+        return d.name;
+      },
+      function (d) {
+        return d.total_assessment_reports;
+      },
+      function (d) {
+        return d.total_working_groups;
+      },
+      function (d) {
+        return d.total_contributions;
+      },
+      function (d) {
+        return d.contribution_codes.join(", ");
+      }
+    ])
+    // (optional) sort using the given field, :default = function(d){return d;}
+    .sortBy(function (d) {
+      return d.total_contributions;
+    })
+    // (optional) sort order, :default ascending
+    .order(d3.descending)
+    // (optional) custom renderlet to post-process chart using D3
+    .renderlet(function (table) {
+      table.selectAll(".dc-table-group").classed("info", true);
+    });
 
 });
 
