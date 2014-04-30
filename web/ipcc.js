@@ -8,7 +8,7 @@
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
-var totalAssessmentReportChart = dc.barChart("#total-assessment-report-chart");
+var totalAssessmentReportsChart = dc.barChart("#total-assessment-report-chart");
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var workingGroupsChart = dc.rowChart("#working-groups-chart");
 var chaptersChart = dc.lineChart("#chapters-chart");
@@ -638,7 +638,7 @@ d3.csv("ndx.csv", function (data) {
     // to a specific group then any interaction with such chart will only trigger redraw
     // on other charts within the same chart group.
     /* dc.barChart("#volume-month-chart") */
-    totalAssessmentReportChart.width(420)
+    totalAssessmentReportsChart.width(420)
         .height(180)
         .margins({top: 10, right: 50, bottom: 30, left: 40})
         .dimension(fluctuation)
@@ -661,9 +661,9 @@ d3.csv("ndx.csv", function (data) {
         });
 
     // Customize axis
-    totalAssessmentReportChart.xAxis().tickFormat(
+    totalAssessmentReportsChart.xAxis().tickFormat(
         function (v) { return v + "%"; });
-    totalAssessmentReportChart.yAxis().ticks(5);
+    totalAssessmentReportsChart.yAxis().ticks(5);
 
     //#### Stacked Area Chart
     //Specify an area chart, by using a line chart with `.renderArea(true)`
