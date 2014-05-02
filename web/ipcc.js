@@ -428,7 +428,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       removeContribution,
       resetContributions
     );
-
   }
 
   function createAuthorGroup ( crossfilterDimension ) {
