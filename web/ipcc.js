@@ -721,19 +721,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .label(function (d) {
       var
         key = d.key,
-        value = unwrapValue(d.value),
-        text = key===true? "Yes": "No",
-        percentage;
+        text = key===true? "Yes": "No";
 
-      if (
-        rolesOfResponsibilityChart.hasFilter() &&
-        !rolesOfResponsibilityChart.hasFilter(key)
-      ) {
-        percentage = 0;
-      } else {
-        percentage = Math.floor(value / total_authors * 100);
-      }
-      return text + " (" + percentage + "%)";
+      return text;
     })
     /*
     // (optional) whether chart should render labels, :default = true
@@ -770,20 +760,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return d.key + " (" + unwrapValue(d.value) + " authors)";
     })
     .label(function (d) {
-      var
-        key = d.key,
-        value = unwrapValue(d.value),
-        percentage;
-
-      if (
-        rolesOfResponsibilityChart.hasFilter() &&
-        !rolesOfResponsibilityChart.hasFilter(key)
-      ) {
-        percentage = 0;
-      } else {
-        percentage = Math.floor(value / total_authors * 100);
-      }
-      return key + " (" + percentage + "%)";
+      return d.key;
     });
 
   d3.select("#reset-roles-of-responsibility-chart")
