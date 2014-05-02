@@ -264,6 +264,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       contribution.author_id = author.id;
       // collect contributions of all authors
       author_contributions.push(contribution);
+      // set sequential identifier
+      contribution.id = author_contributions.length;
       return contribution;
     });
   }
@@ -318,10 +320,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
 
-  function countDistinctAuthorsForContributions ( crossfilterGroup ) {
+  function countDistinctAuthorsForContributions ( crossfilterGroup, description ) {
     // hash of author id -> total contributions currently selected
     // (the property is deleted when no contribution is selected)
     var authorContributionsSelected;
+    var contributionsSelected;
 
     function isAuthorSelected (authorId) {
       return authorContributionsSelected.hasOwnProperty(authorId);
@@ -343,10 +346,21 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       delete authorContributionsSelected[authorId];
     }
 
+    function isContributionSelected (contributionId) {
+      return contributionsSelected[contributionId] === true;
+    }
+
     function addContribution(accumulator, contribution) {
       var
+        contributionId = contribution.id,
         authorId = contribution.author_id,
         authorWasSelected = isAuthorSelected(authorId);
+
+      if ( isContributionSelected(contributionId) ) {
+        console.error( description, "Contribution already selected: ", contribution );
+        return accumulator;
+      }
+      contributionsSelected[contributionId] = true;
 
       incrementAuthorContributions(authorId);
 
@@ -358,7 +372,15 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     }
 
     function removeContribution(accumulator, contribution) {
-      var authorId = contribution.author_id;
+      var
+        contributionId = contribution.id,
+        authorId = contribution.author_id;
+
+      if ( !isContributionSelected(contributionId) ) {
+        console.error( description, "Contribution unselected already: ", contribution );
+        return accumulator;
+      }
+      contributionsSelected[contributionId] = false;
 
       decrementAuthorContributions(authorId);
 
@@ -371,6 +393,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
     function resetContributions() {
       authorContributionsSelected = {};
+      contributionsSelected = {};
       return 0;
     }
 
@@ -385,7 +408,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var contributionsCrossFilter = crossfilter(author_contributions);
   var allContributions = contributionsCrossFilter.groupAll();
-  countDistinctAuthorsForContributions(allContributions);
+  countDistinctAuthorsForContributions(allContributions, "all");
 
   // utility function to replace the common pattern
   // function (d) {
@@ -408,7 +431,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var workingGroupDimension =
     contributionsCrossFilter.dimension( getter('wg') );
   var workingGroupGroup = workingGroupDimension.group();
-  countDistinctAuthorsForContributions(workingGroupGroup);
+  countDistinctAuthorsForContributions(workingGroupGroup, "wg");
 
   // dimension and group by total assessment reports
   var totalAssessmentReportsDimension =
@@ -416,7 +439,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return d.author.total_assessment_reports;
     });
   var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
-  countDistinctAuthorsForContributions(totalAssessmentReportsGroup);
+  countDistinctAuthorsForContributions(totalAssessmentReportsGroup, "ar");
 
   /*
   //#### Data Count
