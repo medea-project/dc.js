@@ -320,11 +320,41 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
 
+  function createAccumulatorState(value){
+
+    function increment() {
+      value++;
+    }
+
+    function decrement() {
+      value--;
+    }
+
+    function getValue() {
+      return value;
+    }
+
+    getValue.increment = increment;
+    getValue.decrement = decrement;
+    return getValue;
+  }
+
+  function extractAccumulatorStateValue (value) {
+    if ( typeof value === 'function' ) {
+      return value();
+    } else {
+      // value is unwrapped already
+      return value;
+    }
+  }
+
   function countDistinctAuthorsForContributions ( crossfilterGroup, description ) {
     // hash of author id -> total contributions currently selected
     // (the property is deleted when no contribution is selected)
     var authorContributionsSelected;
     var contributionsSelected;
+    authorContributionsSelected = {};
+    contributionsSelected = {};
 
     function isAuthorSelected (authorId) {
       return authorContributionsSelected.hasOwnProperty(authorId);
@@ -364,11 +394,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
       incrementAuthorContributions(authorId);
 
-      if ( authorWasSelected ) {
-        return accumulator;
-      } else {
-        return accumulator + 1;
+      if ( !authorWasSelected ) {
+        accumulator.increment();
       }
+      return accumulator;
     }
 
     function removeContribution(accumulator, contribution) {
@@ -384,17 +413,14 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
       decrementAuthorContributions(authorId);
 
-      if ( isAuthorSelected(authorId) ) {
-        return accumulator;
-      } else {
-        return accumulator - 1;
+      if ( !isAuthorSelected(authorId) ) {
+        accumulator.decrement();
       }
+      return accumulator;
     }
 
     function resetContributions() {
-      authorContributionsSelected = {};
-      contributionsSelected = {};
-      return 0;
+      return createAccumulatorState(0);
     }
 
     crossfilterGroup.reduce(
@@ -402,13 +428,49 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       removeContribution,
       resetContributions
     );
+
+  }
+
+  function createAuthorGroup ( crossfilterDimension ) {
+    var
+      crossfilterGroup = crossfilterDimension.group(),
+      getAllGroups = bind( crossfilterGroup.all, crossfilterGroup );
+
+    countDistinctAuthorsForContributions(crossfilterGroup);
+
+    // replace group.all() with a function which unwraps the value
+    // out of the accumulator state when needed
+    crossfilterGroup.all = function() {
+      var groups = getAllGroups();
+      forEach(groups, function(group) {
+        group.value = extractAccumulatorStateValue(group.value);
+      });
+      return groups;
+    };
+
+    return crossfilterGroup;
+  }
+
+  function createAllAuthorsGroup ( crossFilter ) {
+    var
+      crossfilterGroupAll = crossFilter.groupAll(),
+      getTotalValue = crossfilterGroupAll.value;
+
+    countDistinctAuthorsForContributions(crossfilterGroupAll);
+
+    // replace groupAll.all() with a function which unwraps the value
+    // from the accumulator state
+    crossfilterGroupAll.value = function(){
+      return extractAccumulatorStateValue( getTotalValue() );
+    };
+
+    return crossfilterGroupAll;
   }
 
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var contributionsCrossFilter = crossfilter(author_contributions);
-  var allContributions = contributionsCrossFilter.groupAll();
-  countDistinctAuthorsForContributions(allContributions, "all");
+  var allAuthorsGroup = createAllAuthorsGroup(contributionsCrossFilter);
 
   // utility function to replace the common pattern
   // function (d) {
@@ -430,16 +492,15 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   // filter and group by working group
   var workingGroupDimension =
     contributionsCrossFilter.dimension( getter('wg') );
-  var workingGroupGroup = workingGroupDimension.group();
-  countDistinctAuthorsForContributions(workingGroupGroup, "wg");
+  var workingGroupGroup = createAuthorGroup(workingGroupDimension);
 
   // dimension and group by total assessment reports
   var totalAssessmentReportsDimension =
     contributionsCrossFilter.dimension( function (d) {
       return d.author.total_assessment_reports;
     });
-  var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
-  countDistinctAuthorsForContributions(totalAssessmentReportsGroup, "ar");
+  var totalAssessmentReportsGroup =
+    createAuthorGroup(totalAssessmentReportsDimension);
 
   /*
   //#### Data Count
@@ -455,7 +516,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .dimension({
       size: always(total_authors)
     })
-    .group(allContributions);
+    .group(allAuthorsGroup);
 
   /*
   //#### Data Table
