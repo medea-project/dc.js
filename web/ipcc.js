@@ -337,7 +337,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return authorContributionsSelected.hasOwnProperty(authorId);
     }
 
-    function addContribution (contribution) {
+    function addAuthorContribution (contribution) {
       var authorId = contribution.author_id;
       if ( !isAuthorSelected(authorId) ) {
         incrementAuthorsCount();
@@ -347,7 +347,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       }
     }
 
-    function removeContribution(contribution) {
+    function removeAuthorContribution(contribution) {
       var authorId = contribution.author_id;
       if ( authorContributionsSelected[authorId] <= 0 ) {
         console.error( "No contribution to remove fron author ", authorId );
@@ -367,8 +367,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     }
 
     state = getAuthorsCount;
-    state.addContribution = addContribution;
-    state.removeContribution = removeContribution;
+    state.addAuthorContribution = addAuthorContribution;
+    state.removeAuthorContribution = removeAuthorContribution;
     return state;
   }
 
@@ -383,12 +383,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   function countDistinctAuthorsForContributions ( crossfilterGroup ) {
 
     function addAuthorContribution(accumulator, contribution) {
-      accumulator.addContribution( contribution );
+      accumulator.addAuthorContribution( contribution );
       return accumulator;
     }
 
     function removeAuthorContribution(accumulator, contribution) {
-      accumulator.removeContribution( contribution );
+      accumulator.removeAuthorContribution( contribution );
       return accumulator;
     }
 
