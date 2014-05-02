@@ -51,9 +51,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     // total number of authors
     total_authors = data.length,
     // list of all contributions for all authors
-    author_contributions = [],
-    // hash of author id -> total contributions currently selected
-    author_contributions_selected = {};
+    author_contributions = [];
 
   // from nada (CC0)
   /*
@@ -318,51 +316,71 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_working_groups = countProperties(d.working_groups);
     d.assessment_reports = getAssessmentReports(d.contributions);
     d.total_assessment_reports = countProperties(d.assessment_reports);
-    // select all contributions initially
-    author_contributions_selected[d.id] = 0;
   });
 
-  var countAllAuthors = always(total_authors);
+  function countDistinctAuthorsForContributions ( crossfilterGroup ) {
+    // hash of author id -> total contributions currently selected
+    // (the property is deleted when no contribution is selected)
+    var authorContributionsSelected = {};
 
-  function isAuthorSelected (authorId) {
-    return author_contributions_selected[authorId] > 0;
-  }
-
-  function addContribution(accumulator, contribution) {
-    var
-      authorId = contribution.author_id,
-      authorWasSelected = isAuthorSelected(authorId);
-
-    author_contributions_selected[authorId]++;
-
-    if ( authorWasSelected ) {
-      return accumulator;
-    } else {
-      return accumulator + 1;
+    function isAuthorSelected (authorId) {
+      return authorContributionsSelected.hasOwnProperty(authorId);
     }
-  }
 
-  function removeContribution(accumulator, contribution) {
-    var authorId = contribution.author_id;
-
-    author_contributions_selected[authorId]--;
-
-    if ( isAuthorSelected(authorId) ) {
-      return accumulator;
-    } else {
-      return accumulator - 1;
+    function incrementAuthorContributions (authorId) {
+      if ( authorContributionsSelected.hasOwnProperty(authorId) ) {
+        authorContributionsSelected[authorId]++;
+      } else {
+        authorContributionsSelected[authorId] = 1;
+      }
     }
+
+    function decrementAuthorContributions (authorId) {
+      authorContributionsSelected[authorId]--;
+      if ( authorContributionsSelected[authorId] > 0 ) {
+        return;
+      }
+      delete authorContributionsSelected[authorId];
+    }
+
+    function addContribution(accumulator, contribution) {
+      var
+        authorId = contribution.author_id,
+        authorWasSelected = isAuthorSelected(authorId);
+
+      incrementAuthorContributions(authorId);
+
+      if ( authorWasSelected ) {
+        return accumulator;
+      } else {
+        return accumulator + 1;
+      }
+    }
+
+    function removeContribution(accumulator, contribution) {
+      var authorId = contribution.author_id;
+
+      decrementAuthorContributions(authorId);
+
+      if ( isAuthorSelected(authorId) ) {
+        return accumulator;
+      } else {
+        return accumulator - 1;
+      }
+    }
+
+    crossfilterGroup.reduce(
+      addContribution,
+      removeContribution,
+      always(0)
+    );
   }
 
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var contributionsCrossFilter = crossfilter(author_contributions);
   var allContributions = contributionsCrossFilter.groupAll();
-  allContributions.reduce(
-    addContribution,
-    removeContribution,
-    always(0)
-  );
+  countDistinctAuthorsForContributions(allContributions);
 
   // utility function to replace the common pattern
   // function (d) {
