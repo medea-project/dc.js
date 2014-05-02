@@ -12,10 +12,6 @@
         #assessment-reports-chart g.y {
             display: none;
         }
-
-        #working-groups-chart g.row text {
-            fill: #333;
-        }
     </style>
 </head>
 <body>
@@ -86,18 +82,19 @@
 <div class="row">
     <div>
         <div class="dc-data-count">
-            <span class="filter-count"></span> selected out of <span class="total-count"></span> authors | <a
+            <span class="filter-count"></span> selected out of <span class="total-count"></span> contributions | <a
                 href="javascript:dc.filterAll('ipcc-authors'); dc.renderAll('ipcc-authors');">Reset All</a>
         </div>
     </div>
     <table class="table table-hover dc-data-table">
         <thead>
         <tr class="header">
-            <th>Name</th>
-            <th>Total Assessment Reports</th>
-            <th>Total Working Groups</th>
-            <th>Total Contributions</th>
-            <th>Contributions</th>
+            <th>&#xA0;</th>
+            <th>Assessment Report</th>
+            <th>Working Group</th>
+            <th>Role</th>
+            <th>Institution Id</th>
+            <th>Country Id</th>
         </tr>
         </thead>
     </table>

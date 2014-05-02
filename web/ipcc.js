@@ -226,9 +226,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       CONTRIBUTIONS_NUMBER = 5,
 
       WORKING_GROUP_NAMES = {
-        1: 'I',
-        2: 'II',
-        3: 'III'
+        1: 'WG I',
+        2: 'WG II',
+        3: 'WG III'
       },
 
       ROLE_NAMES = {
@@ -239,7 +239,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       };
 
     return {
-      ar: parts[ASSESSMENT_REPORT],
+      ar: "AR " + parts[ASSESSMENT_REPORT],
       wg: WORKING_GROUP_NAMES[ parts[WORKING_GROUP] ],
       role: ROLE_NAMES[ parts[ROLE] ],
       institution: parts[INSTITUTION_ID],
@@ -252,7 +252,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   function getAuthorContributions (author, contributionCodes) {
     return map(contributionCodes, function( contributionCode ) {
       var contribution = parseContributionCode (contributionCode);
+      // add reference to parent author
       contribution.author = author;
+      contribution.author_id = author.id;
       // collect contributions of all authors
       author_contributions.push(contribution);
       return contribution;
@@ -271,7 +273,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     var
       cumulatedWorkingGroup = "",
       separator = "";
-    forEach(["I","II","III"], function (wg) {
+    forEach(["WG I","WG II","WG III"], function (wg) {
       if ( workingGroups[wg] === true ) {
         cumulatedWorkingGroup += separator + wg;
         separator = "+";
@@ -311,9 +313,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
-  var authors = crossfilter(data);
-  var total_authors = authors.size();
-  var all = authors.groupAll();
+  var contributionsCrossFilter = crossfilter(author_contributions);
+  var allContributions = contributionsCrossFilter.groupAll();
 
   // utility function to replace the common pattern
   // function (d) {
@@ -327,19 +328,23 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     };
   }
 
-  // dimension by author id
-  var authorDimension =
-    authors.dimension( getter('id') );
+  // filter and group contributions by author id
+  var authorIdDimension =
+    contributionsCrossFilter.dimension( getter('author_id') );
+  var authorIdGroup = authorIdDimension.group();
+  var total_authors = authorIdGroup.size();
+
+  // filter and group by working group
+  var workingGroupDimension =
+    contributionsCrossFilter.dimension( getter('wg') );
+  var workingGroupGroup = workingGroupDimension.group();
 
   // dimension and group by total assessment reports
   var totalAssessmentReportsDimension =
-    authors.dimension( getter('total_assessment_reports') );
+    contributionsCrossFilter.dimension( function (d) {
+      return d.author.total_assessment_reports;
+    });
   var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
-
-  // dimension and group by working group
-  var cumulatedWorkingGroupDimension =
-    authors.dimension( getter('cumulated_working_group') );
-  var cumulatedWorkingGroupGroup = cumulatedWorkingGroupDimension.group();
 
   /*
   //#### Data Count
@@ -352,8 +357,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   </div>
   */
   dc.dataCount(".dc-data-count", "ipcc-authors")
-    .dimension(authors)
-    .group(all);
+    .dimension(contributionsCrossFilter)
+    .group(allContributions);
 
   /*
   //#### Data Table
@@ -375,26 +380,47 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   </div>
   */
   dc.dataTable(".dc-data-table", "ipcc-authors")
-    .dimension(authorDimension)
+    .dimension(authorIdDimension)
     .group(function(d){
-      return d.total_assessment_reports + " Assessment Reports";
+      var
+        author = d.author,
+        totalContributions = author.total_contributions,
+        totalAssessmentReports = author.total_assessment_reports,
+        totalWorkingGroups = author.total_working_groups,
+        description = author.name;
+
+      if ( totalContributions > 1 ) {
+        description += " (" + totalContributions + " contributions in total";
+        if ( totalWorkingGroups > 1 ) {
+          description +=
+            " in " + totalWorkingGroups + " working groups";
+        }
+        if ( totalAssessmentReports > 1 ) {
+          description +=
+            " over " + totalAssessmentReports + " assessment reports";
+        }
+        description += ")";
+      }
+
+      return description;
     })
     // display all authors
     .size(total_authors) // (optional) max number of records to be shown, :default = 25
     // dynamic columns creation using an array of closures
     .columns([
-      getter('name'),
-      getter('total_assessment_reports'),
-      getter('total_working_groups'),
-      getter('total_contributions'),
       function (d) {
-        return d.contribution_codes.join(", ");
-      }
+        return d.count + " contribution" + (d.count===1? "": "s") + " in:";
+      },
+      getter('ar'),
+      getter('wg'),
+      getter('role'),
+      getter('institution'),
+      getter('country')
     ])
     // (optional) sort using the given field, :default = function(d){return d;}
-    .sortBy( getter('total_contributions') )
+    .sortBy( getter('ar') )
     // (optional) sort order, :default ascending
-    .order(d3.descending)
+    //.order(d3.descending)
     // (optional) custom renderlet to post-process chart using D3
     .renderlet(function (table) {
       table.selectAll(".dc-table-group").classed("info", true);
@@ -410,7 +436,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     dc.barChart("#total-assessment-report-chart", "ipcc-authors");
   totalAssessmentReportsChart.width(420)
     .height(420)
-    .margins({top: 10, right: 10, bottom: 30, left: 10})
+    .margins({top: 10, right: 10, bottom: 30, left: 40})
     .dimension(totalAssessmentReportsDimension)
     .group(totalAssessmentReportsGroup)
     //.y( d3.scale.log().domain([1,total_authors]).range([0,180]) )
@@ -449,24 +475,24 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   workingGroupsChart.width(180)
     .height(420)
     .margins({top: 10, left: 10, right: 10, bottom: 30})
-    .dimension(cumulatedWorkingGroupDimension)
-    .group(cumulatedWorkingGroupGroup)
+    .dimension(workingGroupDimension)
+    .group(workingGroupGroup)
     // assign colors to each value in the x scale domain
     .ordinalColors(
-      ['#FF0000','#FF00FF','#000000','#FFFF00','#0000FF','#00FFFF','#00FF00']
+      ['#FF0000','#00FF00','#0000FF']
     )
-    .label(function (d) {
-        return "WG " + d.key;
-    })
+    //.label(function (d) {
+    //  return d.key;
+    //})
     // the x offset (horizontal space to the top left corner of a row)
     // for labels on a particular row chart. Default x offset is 10px;
-    .labelOffsetX(10)
+    .labelOffsetX(5)
     // the y offset (vertical space to the top left corner of a row)
     // for labels on a particular row chart. Default y offset is 15px;
-    .labelOffsetY(30)
+    .labelOffsetY(20)
     // title sets the row text
     .title(function (d) {
-        return "WG " + d.key + " (" + d.value + " authors)";
+        return d.key + " (" + d.value + " authors)";
     })
     .elasticX(true)
     .xAxis().ticks(4);
