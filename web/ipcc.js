@@ -205,6 +205,13 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     }
   }
 
+  function parseContributions (tsvContributions) {
+    // remove starting '[' and ending ']'
+    return tsvContributions.slice(1,-1)
+      // split items separated by '|'
+      .split('|');
+  }
+
   function parseContributionCode (contributionCode) {
     var
       parts = contributionCode.split('.'),
@@ -238,13 +245,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       // remove 'x' (multiplication sign) before contributions number
       count: Number(parts[CONTRIBUTIONS_NUMBER].slice(1))
     };
-  }
-
-  function parseContributions (tsvContributions) {
-    // remove starting '[' and ending ']'
-    return tsvContributions.slice(1,-1)
-      // split items separated by '|'
-      .split('|');
   }
 
   function getWorkingGroups (contributions) {
