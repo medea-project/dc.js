@@ -9,7 +9,6 @@
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
 var authorsTable;
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
-var totalAssessmentReportsChart;
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var workingGroupsChart;
 var chaptersChart = dc.lineChart("#chapters-chart");
@@ -549,7 +548,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   // to a specific group then any interaction with such chart will only trigger redraw
   // on other charts within the same chart group.
   /* dc.barChart("#volume-month-chart") */
-  totalAssessmentReportsChart =
+  var totalAssessmentReportsChart =
     dc.barChart("#total-assessment-report-chart", "ipcc-authors");
   totalAssessmentReportsChart.width(420)
     .height(420)
@@ -587,6 +586,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   // Customize axis
   totalAssessmentReportsChart.xAxis().ticks(5);
   totalAssessmentReportsChart.yAxis().ticks(5);
+
+  d3.select("#reset-total-assessment-report-chart")
+    .on("click", function(){
+      totalAssessmentReportsChart.filterAll('ipcc-authors');
+      dc.redrawAll('ipcc-authors');
+    });
 
   //#### Row Chart
   workingGroupsChart = dc.rowChart("#working-groups-chart", "ipcc-authors");
@@ -626,6 +631,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   // dc.redrawAll();
   // or you can choose to redraw only those charts associated with a specific chart group
   // dc.redrawAll("group");
+
 });
 
 d3.csv("ndx.csv", function (data) {
