@@ -425,6 +425,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var contributionsCrossFilter = crossfilter(author_contributions);
   var allAuthorsGroup = createAllAuthorsGroup(contributionsCrossFilter);
 
+  function countSelectedAuthors() {
+    return extractAccumulatorStateValue( allAuthorsGroup.value() );
+  }
+
   // utility function to replace the common pattern
   // function (d) {
   //   return d.name;
@@ -470,9 +474,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       size: always(total_authors)
     })
     .group({
-      value: function() {
-        return extractAccumulatorStateValue( allAuthorsGroup.value() );
-      }
+      value: countSelectedAuthors
     });
 
   /*
