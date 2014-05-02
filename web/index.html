@@ -9,6 +9,11 @@
     <link rel="stylesheet" type="text/css" href="css/dc.css"/>
 
     <style>
+        /* hide charts no implemeted yet */
+        .not-implemented {
+          display: none;
+        }
+
         .row {
           max-width: 960px;
         }
@@ -43,7 +48,7 @@
 
 <h2>IPCC Authors (dc.js, Dimensional Charting Javascript Library)</h2>
 
-<div class="row">
+<div class="row not-implemented">
     <div id="assessment-reports-chart">
         <strong>Assessment Reports</strong>
     </div>
@@ -85,7 +90,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row not-implemented">
     <div id="chapters-chart">
         <strong>Chapters</strong>
         <span class="reset" style="display: none;">range: <span class="filter"></span></span>
@@ -96,7 +101,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row not-implemented">
     <div id="country-groups-chart" class="dc-chart">
         <strong>Country Groups</strong> (Radius: Total Authors, Color: Total Assessment Reports)
         <a class="reset" href="javascript:countryGroupsChart.filterAll();dc.redrawAll();"

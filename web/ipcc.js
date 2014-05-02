@@ -761,7 +761,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     })
     .label(function (d) {
       return d.key;
-    });
+    })
+    // set the minimal slice angle for label rendering.
+    // Any slice with a smaller angle will not render slice label.
+    // Default min angle is 0.5.
+    .minAngleForLabel(0); // always display labels
 
   d3.select("#reset-roles-of-responsibility-chart")
     .on("click", function() {
