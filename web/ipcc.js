@@ -474,27 +474,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       value: countSelectedAuthors
     });
 
-  d3.select("#reset-all")
-    .on("click", function() {
-      dc.filterAll('ipcc-authors');
-      dc.renderAll('ipcc-authors');
-    });
-
   var maximumAuthorsSelect =
     document.getElementById("maximum-authors-displayed");
-
-  function getMaximumAuthorsToList() {
-    var
-      value = maximumAuthorsSelect.value,
-      VALUE_ALL = "ALL";
-
-    if ( value === VALUE_ALL ) {
-      // list all authors
-      return total_authors;
-    } else {
-      return Number(value);
-    }
-  }
 
   /*
   //#### Data Table
@@ -562,10 +543,36 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       table.selectAll(".dc-table-group").classed("info", true);
     });
 
+  function getMaximumAuthorsToList() {
+    var
+      value = maximumAuthorsSelect.value,
+      VALUE_ALL = "ALL";
+
+    if ( value === VALUE_ALL ) {
+      // list all authors
+      return total_authors;
+    } else {
+      return Number(value);
+    }
+  }
+
   d3.select(maximumAuthorsSelect)
     .on("change", function() {
       authorsTable.size( getMaximumAuthorsToList() );
       authorsTable.redraw();
+    });
+
+  function resetMaximumAuthorsSelect() {
+    var defaultValue = maximumAuthorsSelect.firstChild.value;
+    maximumAuthorsSelect.value = defaultValue;
+    authorsTable.size( Number(defaultValue) );
+  }
+
+  d3.select("#reset-all")
+    .on("click", function() {
+      resetMaximumAuthorsSelect();
+      dc.filterAll('ipcc-authors');
+      dc.renderAll('ipcc-authors');
     });
 
   //#### Bar Chart
