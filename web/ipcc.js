@@ -264,8 +264,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       contribution.author_id = author.id;
       // collect contributions of all authors
       author_contributions.push(contribution);
-      // set sequential identifier
-      contribution.id = author_contributions.length;
       return contribution;
     });
   }
@@ -363,17 +361,13 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     }
 
     function addContribution (contribution) {
-      var
-        contributionId = contribution.id,
-        authorId = contribution.author_id;
+      var authorId = contribution.author_id;
 
       incrementAuthorContributions(authorId);
     }
 
     function removeContribution(contribution) {
-      var
-        contributionId = contribution.id,
-        authorId = contribution.author_id;
+      var authorId = contribution.author_id;
 
       decrementAuthorContributions(authorId);
     }
