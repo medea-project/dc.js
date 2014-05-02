@@ -403,6 +403,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var workingGroupDimension =
     contributionsCrossFilter.dimension( getter('wg') );
   var workingGroupGroup = workingGroupDimension.group();
+  countDistinctAuthorsForContributions(workingGroupGroup);
 
   // dimension and group by total assessment reports
   var totalAssessmentReportsDimension =
@@ -410,6 +411,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return d.author.total_assessment_reports;
     });
   var totalAssessmentReportsGroup = totalAssessmentReportsDimension.group();
+  countDistinctAuthorsForContributions(totalAssessmentReportsGroup);
 
   /*
   //#### Data Count
