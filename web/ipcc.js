@@ -479,7 +479,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return description;
     })
     // display all authors
-    .size(total_authors) // (optional) max number of records to be shown, :default = 25
+    // .size(total_authors) // (optional) max number of records to be shown, :default = 25
     // dynamic columns creation using an array of closures
     .columns([
       function (d) {
