@@ -7,7 +7,6 @@
 // ### Create Chart Objects
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
-var authorsTable;
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var chaptersChart = dc.lineChart("#chapters-chart");
@@ -481,6 +480,22 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       dc.renderAll('ipcc-authors');
     });
 
+  var maximumAuthorsSelect =
+    document.getElementById("maximum-authors-displayed");
+
+  function getMaximumAuthorsToList() {
+    var
+      value = maximumAuthorsSelect.value,
+      VALUE_ALL = "ALL";
+
+    if ( value === VALUE_ALL ) {
+      // list all authors
+      return total_authors;
+    } else {
+      return Number(value);
+    }
+  }
+
   /*
   //#### Data Table
   // Create a data table widget and use the given css selector as anchor. You can also specify
@@ -500,7 +515,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     <!-- data rows will filled in here -->
   </div>
   */
-  authorsTable = dc.dataTable(".dc-data-table", "ipcc-authors")
+  var authorsTable = dc.dataTable(".dc-data-table", "ipcc-authors")
     .dimension(authorIdDimension)
     .group(function(d){
       var
@@ -525,8 +540,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
       return description;
     })
-    // display all authors
-    // .size(total_authors) // (optional) max number of records to be shown, :default = 25
+    // (optional) max number of records to be shown, :default = 25
+    .size( getMaximumAuthorsToList() )
     // dynamic columns creation using an array of closures
     .columns([
       function (d) {
@@ -545,6 +560,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     // (optional) custom renderlet to post-process chart using D3
     .renderlet(function (table) {
       table.selectAll(".dc-table-group").classed("info", true);
+    });
+
+  d3.select(maximumAuthorsSelect)
+    .on("change", function() {
+      authorsTable.size( getMaximumAuthorsToList() );
+      authorsTable.redraw();
     });
 
   //#### Bar Chart
