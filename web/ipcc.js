@@ -337,7 +337,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return authorContributionsSelected.hasOwnProperty(authorId);
     }
 
-    function incrementAuthorContributions (authorId) {
+    function addContribution (contribution) {
+      var authorId = contribution.author_id;
       if ( !isAuthorSelected(authorId) ) {
         incrementAuthorsCount();
         authorContributionsSelected[authorId] = 1;
@@ -346,7 +347,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       }
     }
 
-    function decrementAuthorContributions (authorId) {
+    function removeContribution(contribution) {
+      var authorId = contribution.author_id;
       if ( authorContributionsSelected[authorId] <= 0 ) {
         console.error( "No contribution to remove fron author ", authorId );
         return;
@@ -358,18 +360,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
         decrementAuthorsCount();
         delete authorContributionsSelected[authorId];
       }
-    }
-
-    function addContribution (contribution) {
-      var authorId = contribution.author_id;
-
-      incrementAuthorContributions(authorId);
-    }
-
-    function removeContribution(contribution) {
-      var authorId = contribution.author_id;
-
-      decrementAuthorContributions(authorId);
     }
 
     function getAuthorsCount() {
