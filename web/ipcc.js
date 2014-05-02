@@ -47,6 +47,8 @@ var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 //```
 d3.tsv("ipcc-authors.tsv", function (data) {
 
+  var author_contributions = [];
+
   // from nada (CC0)
   /*
     Identity Function: return the given argument
@@ -247,6 +249,16 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     };
   }
 
+  function getAuthorContributions (author, contributionCodes) {
+    return map(contributionCodes, function( contributionCode ) {
+      var contribution = parseContributionCode (contributionCode);
+      contribution.author = author;
+      // collect contributions of all authors
+      author_contributions.push(contribution);
+      return contribution;
+    });
+  }
+
   function getWorkingGroups (contributions) {
     var workingGroups = {};
     forEach( contributions, function (contribution) {
@@ -288,7 +300,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   data.forEach(function (d) {
     d.name = d.first_name + ' ' + d.last_name;
     d.contribution_codes = parseContributions(d.contributions);
-    d.contributions = map(d.contribution_codes, parseContributionCode);
+    d.contributions = getAuthorContributions(d, d.contribution_codes);
     d.total_contributions = Number(d.total_contributions);
     d.working_groups = getWorkingGroups(d.contributions);
     d.cumulated_working_group = getCumulatedWorkingGroup(d.working_groups);
