@@ -568,7 +568,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .title(function (d) {
         return d.key + " (" + d.value + " authors)";
     })
-    .elasticX(true)
+    //.elasticX(true)
     .xAxis().ticks(4);
 
   //#### Rendering
