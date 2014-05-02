@@ -47,20 +47,29 @@ var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
 //```
 d3.tsv("ipcc-authors.tsv", function (data) {
 
-  var author_contributions = [];
+  var
+    // total number of authors
+    total_authors = data.length,
+    // list of all contributions for all authors
+    author_contributions = [],
+    // hash of author id -> total contributions currently selected
+    author_contributions_selected = {};
 
   // from nada (CC0)
   /*
-    Identity Function: return the given argument
+    Create a function which always returns the given value
 
     Parameter:
-      value - any value
+      value - any, any value
 
     Returns:
-      the same value provided as parameter
+      function, a function which always returns the given value,
+      whatever the input
   */
-  function identity( value ) {
-    return value;
+  function always( value ) {
+    return function() {
+      return value;
+    };
   }
 
   // from nada (CC0)
@@ -309,12 +318,51 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_working_groups = countProperties(d.working_groups);
     d.assessment_reports = getAssessmentReports(d.contributions);
     d.total_assessment_reports = countProperties(d.assessment_reports);
+    // select all contributions initially
+    author_contributions_selected[d.id] = 0;
   });
+
+  var countAllAuthors = always(total_authors);
+
+  function isAuthorSelected (authorId) {
+    return author_contributions_selected[authorId] > 0;
+  }
+
+  function addContribution(accumulator, contribution) {
+    var
+      authorId = contribution.author_id,
+      authorWasSelected = isAuthorSelected(authorId);
+
+    author_contributions_selected[authorId]++;
+
+    if ( authorWasSelected ) {
+      return accumulator;
+    } else {
+      return accumulator + 1;
+    }
+  }
+
+  function removeContribution(accumulator, contribution) {
+    var authorId = contribution.author_id;
+
+    author_contributions_selected[authorId]--;
+
+    if ( isAuthorSelected(authorId) ) {
+      return accumulator;
+    } else {
+      return accumulator - 1;
+    }
+  }
 
   //### Create Crossfilter Dimensions and Groups
   //See the [crossfilter API](https://github.com/square/crossfilter/wiki/API-Reference) for reference.
   var contributionsCrossFilter = crossfilter(author_contributions);
   var allContributions = contributionsCrossFilter.groupAll();
+  allContributions.reduce(
+    addContribution,
+    removeContribution,
+    always(0)
+  );
 
   // utility function to replace the common pattern
   // function (d) {
@@ -332,7 +380,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var authorIdDimension =
     contributionsCrossFilter.dimension( getter('author_id') );
   var authorIdGroup = authorIdDimension.group();
-  var total_authors = authorIdGroup.size();
 
   // filter and group by working group
   var workingGroupDimension =
@@ -357,7 +404,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   </div>
   */
   dc.dataCount(".dc-data-count", "ipcc-authors")
-    .dimension(contributionsCrossFilter)
+    .dimension({
+      size: always(total_authors)
+    })
     .group(allContributions);
 
   /*
