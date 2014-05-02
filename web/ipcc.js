@@ -321,7 +321,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   function countDistinctAuthorsForContributions ( crossfilterGroup ) {
     // hash of author id -> total contributions currently selected
     // (the property is deleted when no contribution is selected)
-    var authorContributionsSelected = {};
+    var authorContributionsSelected;
 
     function isAuthorSelected (authorId) {
       return authorContributionsSelected.hasOwnProperty(authorId);
@@ -369,10 +369,15 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       }
     }
 
+    function resetContributions() {
+      authorContributionsSelected = {};
+      return 0;
+    }
+
     crossfilterGroup.reduce(
       addContribution,
       removeContribution,
-      always(0)
+      resetContributions
     );
   }
 
