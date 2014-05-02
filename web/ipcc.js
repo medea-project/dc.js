@@ -10,7 +10,6 @@
 var authorsTable;
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
-var workingGroupsChart;
 var chaptersChart = dc.lineChart("#chapters-chart");
 var assessmentReportsChart = dc.barChart("#assessment-reports-chart");
 var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
@@ -594,7 +593,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     });
 
   //#### Row Chart
-  workingGroupsChart = dc.rowChart("#working-groups-chart", "ipcc-authors");
+  var workingGroupsChart = dc.rowChart("#working-groups-chart", "ipcc-authors");
   workingGroupsChart.width(180)
     .height(420)
     .margins({top: 10, left: 10, right: 30, bottom: 30})
@@ -620,6 +619,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     })
     //.elasticX(true)
     .xAxis().ticks(4);
+
+  d3.select("#reset-working-groups-chart")
+    .on("click", function() {
+      workingGroupsChart.filterAll('ipcc-authors');
+      dc.redrawAll('ipcc-authors');
+    });
 
   //#### Rendering
   //simply call renderAll() to render all charts on the page
