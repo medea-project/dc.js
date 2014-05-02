@@ -514,7 +514,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .dimension(totalAssessmentReportsDimension)
     .group(totalAssessmentReportsGroup)
     //.y( d3.scale.log().domain([1,total_authors]).range([0,180]) )
-    .elasticY(true)
+    //.elasticY(true)
     // (optional) whether bar should be center to its x value. Not needed for ordinal chart, :default=false
     .centerBar(true)
     // (optional) set gap between bars manually in px, :default=2
