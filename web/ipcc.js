@@ -543,7 +543,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   workingGroupsChart = dc.rowChart("#working-groups-chart", "ipcc-authors");
   workingGroupsChart.width(180)
     .height(420)
-    .margins({top: 10, left: 10, right: 10, bottom: 30})
+    .margins({top: 10, left: 10, right: 30, bottom: 30})
     .dimension(workingGroupDimension)
     .group(workingGroupGroup)
     // assign colors to each value in the x scale domain
