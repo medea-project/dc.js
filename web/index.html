@@ -21,7 +21,9 @@
             margin-right: 30px;
         }
 
-        #working-groups-chart g.row text {
+        #working-groups-chart g.row text,
+        #roles-of-responsibility-chart text.pie-slice ,
+        #distinct-roles-chart text.pie-slice {
             fill: #333;
         }
 
@@ -68,14 +70,16 @@
 
     <div id="roles-of-responsibility-chart">
         <strong>Roles of Responsibility</strong>
-        <a class="reset" href="javascript:rolesOfResponsibilityChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+        <a id="reset-roles-of-responsibility-chart" class="reset"
+          href="#reset-this-filter" style="display: none;">reset</a>
 
         <div class="clearfix"></div>
     </div>
 
     <div id="distinct-roles-chart">
         <strong>Distinct Roles</strong>
-        <a class="reset" href="javascript:distinctRolesChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+        <a id="reset-distinct-roles-chart" class="reset"
+          href="#reset-this-filter" style="display: none;">reset</a>
 
         <div class="clearfix"></div>
     </div>

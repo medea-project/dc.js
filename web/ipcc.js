@@ -7,8 +7,6 @@
 // ### Create Chart Objects
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
-var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
-var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
 var chaptersChart = dc.lineChart("#chapters-chart");
 var assessmentReportsChart = dc.barChart("#assessment-reports-chart");
 var countryGroupsChart = dc.bubbleChart("#country-groups-chart");
@@ -219,6 +217,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       .split('|');
   }
 
+  function isRoleOfResponsibility( roleId ) {
+    return roleId < 4; // not CA
+  }
+
   function parseContributionCode (contributionCode) {
     var
       parts = contributionCode.split('.'),
@@ -247,6 +249,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       ar: "AR " + parts[ASSESSMENT_REPORT],
       wg: WORKING_GROUP_NAMES[ parts[WORKING_GROUP] ],
       role: ROLE_NAMES[ parts[ROLE] ],
+      has_responsibility_role: isRoleOfResponsibility( parts[ROLE] ),
       institution: parts[INSTITUTION_ID],
       country: parts[INSTITUTION_COUNTRY_ID],
       // remove 'x' (multiplication sign) before contributions number
@@ -357,6 +360,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     }
 
     function getAuthorsCount() {
+      // If you see the source code of this function
+      // where you expected a value, consider adding
+      // .valueAccessor(customValueAccessor)
+      // to the configuration of the chart.
       return authorsCount;
     }
 
@@ -367,8 +374,22 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   }
 
   function extractAccumulatorStateValue (value) {
-    return value();
+    // if you see the source code of this function
+    // where you expected a value, consider using
+    // the customValueAccessor defined below
+    // as chart.valueAccessor(customValueAccessor).
+    if ( typeof value === 'function' ) {
+      return value();
+    } else {
+      // the value has already been unwrapped;
+      // this happens with the default cappedValueAccessor()
+      // which calls the valueAccessor() on an unwrapped value;
+      return value;
+    }
   }
+
+  // define simpler alias
+  var unwrapValue = extractAccumulatorStateValue;
 
   function customValueAccessor (d) {
     return extractAccumulatorStateValue(d.value);
@@ -443,11 +464,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     contributionsCrossFilter.dimension( getter('author_id') );
   var authorIdGroup = authorIdDimension.group();
 
-  // filter and group by working group
-  var workingGroupDimension =
-    contributionsCrossFilter.dimension( getter('wg') );
-  var workingGroupGroup = createAuthorGroup(workingGroupDimension);
-
   // dimension and group by total assessment reports
   var totalAssessmentReportsDimension =
     contributionsCrossFilter.dimension( function (d) {
@@ -455,6 +471,22 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     });
   var totalAssessmentReportsGroup =
     createAuthorGroup(totalAssessmentReportsDimension);
+
+  // filter and group by working group
+  var workingGroupDimension =
+    contributionsCrossFilter.dimension( getter('wg') );
+  var workingGroupGroup = createAuthorGroup(workingGroupDimension);
+
+  // filter and group by role of responsibility
+  var roleOfResponsibilityDimension =
+    contributionsCrossFilter.dimension( getter('has_responsibility_role') );
+  var roleOfResponsibilityGroup =
+    createAuthorGroup( roleOfResponsibilityDimension );
+
+  // filter and group by distinct role
+  var distinctRoleDimension =
+    contributionsCrossFilter.dimension( getter('role') );
+  var distinctRoleGroup = createAuthorGroup( distinctRoleDimension );
 
   /*
   //#### Data Count
@@ -649,7 +681,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .labelOffsetY(20)
     // title sets the row text
     .title(function (d) {
-        return d.key + " (" + d.value + " authors)";
+        return d.key + " (" + unwrapValue(d.value) + " authors)";
     })
     //.elasticX(true)
     .xAxis().ticks(4);
@@ -658,6 +690,106 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .on("click", function() {
       workingGroupsChart.filterAll('ipcc-authors');
       dc.redrawAll('ipcc-authors');
+    });
+
+  // #### Pie/Donut Chart
+  // Create a pie chart and use the given css selector as anchor. You can also specify
+  // an optional chart group for this chart to be scoped within. When a chart belongs
+  // to a specific group then any interaction with such chart will only trigger redraw
+  // on other charts within the same chart group.
+
+  var rolesOfResponsibilityChart =
+    dc.pieChart("#roles-of-responsibility-chart", "ipcc-authors");
+
+  rolesOfResponsibilityChart
+    .width(180) // (optional) define chart width, :default = 200
+    .height(180) // (optional) define chart height, :default = 200
+    .radius(80) // define pie radius
+    .dimension(roleOfResponsibilityDimension) // set dimension
+    .valueAccessor(customValueAccessor)
+    .group(roleOfResponsibilityGroup) // set group
+    .title(function (d) {
+      var
+        key = d.key,
+        value = unwrapValue(d.value),
+        text = key===true? "Yes": "No";
+
+      return text + " (" + value + " authors)";
+    })
+    // (optional) by default pie chart will use group.key as it's label
+    // but you can overwrite it with a closure */
+    .label(function (d) {
+      var
+        key = d.key,
+        value = unwrapValue(d.value),
+        text = key===true? "Yes": "No",
+        percentage;
+
+      if (
+        rolesOfResponsibilityChart.hasFilter() &&
+        !rolesOfResponsibilityChart.hasFilter(key)
+      ) {
+        percentage = 0;
+      } else {
+        percentage = Math.floor(value / total_authors * 100);
+      }
+      return text + " (" + percentage + "%)";
+    })
+    /*
+    // (optional) whether chart should render labels, :default = true
+    .renderLabel(true)
+    // (optional) if inner radius is used then a donut chart will be generated instead of pie chart
+    .innerRadius(40)
+    // (optional) define chart transition duration, :default = 350
+    .transitionDuration(500)
+    // (optional) define color array for slices
+    .colors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
+    // (optional) define color domain to match your data domain if you want to bind data or color
+    .colorDomain([-1750, 1644])
+    // (optional) define color value accessor
+    .colorAccessor(function(d, i){return d.value;})
+    */;
+
+  d3.select("#reset-roles-of-responsibility-chart")
+    .on("click", function() {
+      rolesOfResponsibilityChart.filterAll("ipcc-authors");
+      dc.redrawAll("ipcc-authors");
+    });
+
+  var distinctRolesChart =
+    dc.pieChart("#distinct-roles-chart", "ipcc-authors");
+
+  distinctRolesChart.width(180)
+    .height(180)
+    .radius(80)
+    .innerRadius(30)
+    .dimension(distinctRoleDimension)
+    .valueAccessor(customValueAccessor)
+    .group(distinctRoleGroup)
+    .title(function (d) {
+      return d.key + " (" + unwrapValue(d.value) + " authors)";
+    })
+    .label(function (d) {
+      var
+        key = d.key,
+        value = unwrapValue(d.value),
+        percentage;
+
+      if (
+        rolesOfResponsibilityChart.hasFilter() &&
+        !rolesOfResponsibilityChart.hasFilter(key)
+      ) {
+        percentage = 0;
+      } else {
+        percentage = Math.floor(value / total_authors * 100);
+      }
+      return key + " (" + percentage + "%)";
+    });
+
+  d3.select("#reset-roles-of-responsibility-chart")
+    .on("click", function() {
+      distinctRolesChart.filterAll("ipcc-authors");
+      dc.redrawAll("ipcc-authors");
     });
 
   //#### Rendering
@@ -870,46 +1002,6 @@ d3.csv("ndx.csv", function (data) {
         .yAxis().tickFormat(function (v) {
             return v + "%";
         });
-
-    // #### Pie/Donut Chart
-    // Create a pie chart and use the given css selector as anchor. You can also specify
-    // an optional chart group for this chart to be scoped within. When a chart belongs
-    // to a specific group then any interaction with such chart will only trigger redraw
-    // on other charts within the same chart group.
-
-    rolesOfResponsibilityChart
-        .width(180) // (optional) define chart width, :default = 200
-        .height(180) // (optional) define chart height, :default = 200
-        .radius(80) // define pie radius
-        .dimension(gainOrLoss) // set dimension
-        .group(gainOrLossGroup) // set group
-        /* (optional) by default pie chart will use group.key as it's label
-         * but you can overwrite it with a closure */
-        .label(function (d) {
-            if (rolesOfResponsibilityChart.hasFilter() && !rolesOfResponsibilityChart.hasFilter(d.key))
-                return d.key + "(0%)";
-            return d.key + "(" + Math.floor(d.value / all.value() * 100) + "%)";
-        }) /*
-        // (optional) whether chart should render labels, :default = true
-        .renderLabel(true)
-        // (optional) if inner radius is used then a donut chart will be generated instead of pie chart
-        .innerRadius(40)
-        // (optional) define chart transition duration, :default = 350
-        .transitionDuration(500)
-        // (optional) define color array for slices
-        .colors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
-        // (optional) define color domain to match your data domain if you want to bind data or color
-        .colorDomain([-1750, 1644])
-        // (optional) define color value accessor
-        .colorAccessor(function(d, i){return d.value;})
-        */;
-
-    distinctRolesChart.width(180)
-        .height(180)
-        .radius(80)
-        .innerRadius(30)
-        .dimension(quarter)
-        .group(quarterGroup);
 
     //#### Stacked Area Chart
     //Specify an area chart, by using a line chart with `.renderArea(true)`
