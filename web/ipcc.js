@@ -320,23 +320,89 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
 
-  function createAccumulatorState(value){
+  function createAccumulatorState (authorsCount){
+    var
+      state,
+      // hash of author id -> total contributions currently selected
+      // (the property is deleted when no contribution is selected)
+      authorContributionsSelected = {},
+      contributionsSelected = {};
 
-    function increment() {
-      value++;
+    function incrementAuthorsCount() {
+      authorsCount++;
     }
 
-    function decrement() {
-      value--;
+    function decrementAuthorsCount() {
+      authorsCount--;
     }
 
-    function getValue() {
-      return value;
+    function isAuthorSelected (authorId) {
+      return authorContributionsSelected.hasOwnProperty(authorId);
     }
 
-    getValue.increment = increment;
-    getValue.decrement = decrement;
-    return getValue;
+    function incrementAuthorContributions (authorId) {
+      if ( !isAuthorSelected(authorId) ) {
+        incrementAuthorsCount();
+        authorContributionsSelected[authorId] = 1;
+      } else {
+        authorContributionsSelected[authorId]++;
+      }
+    }
+
+    function decrementAuthorContributions (authorId) {
+      if ( authorContributionsSelected[authorId] <= 0 ) {
+        console.error( "No contribution to remove fron author ", authorId );
+        return;
+      }
+
+      authorContributionsSelected[authorId]--;
+
+      if ( authorContributionsSelected[authorId] === 0 ) {
+        decrementAuthorsCount();
+        delete authorContributionsSelected[authorId];
+      }
+    }
+
+    function isContributionSelected (contributionId) {
+      return contributionsSelected[contributionId] === true;
+    }
+
+    function addContribution (contribution) {
+      var
+        contributionId = contribution.id,
+        authorId = contribution.author_id;
+
+      if ( isContributionSelected(contributionId) ) {
+        console.error( "Contribution already selected: ", contribution );
+        return;
+      }
+      contributionsSelected[contributionId] = true;
+
+      incrementAuthorContributions(authorId);
+    }
+
+    function removeContribution(contribution) {
+      var
+        contributionId = contribution.id,
+        authorId = contribution.author_id;
+
+      if ( !isContributionSelected(contributionId) ) {
+        console.error( "Contribution unselected already: ", contribution );
+        return;
+      }
+      contributionsSelected[contributionId] = false;
+
+      decrementAuthorContributions(authorId);
+    }
+
+    function getAuthorsCount() {
+      return authorsCount;
+    }
+
+    state = getAuthorsCount;
+    state.addContribution = addContribution;
+    state.removeContribution = removeContribution;
+    return state;
   }
 
   function extractAccumulatorStateValue (value) {
@@ -347,85 +413,26 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     return extractAccumulatorStateValue(d.value);
   }
 
-  function countDistinctAuthorsForContributions ( crossfilterGroup, description ) {
-    // hash of author id -> total contributions currently selected
-    // (the property is deleted when no contribution is selected)
-    var authorContributionsSelected;
-    var contributionsSelected;
-    authorContributionsSelected = {};
-    contributionsSelected = {};
+  function countDistinctAuthorsForContributions ( crossfilterGroup ) {
 
-    function isAuthorSelected (authorId) {
-      return authorContributionsSelected.hasOwnProperty(authorId);
-    }
-
-    function incrementAuthorContributions (authorId) {
-      if ( authorContributionsSelected.hasOwnProperty(authorId) ) {
-        authorContributionsSelected[authorId]++;
-      } else {
-        authorContributionsSelected[authorId] = 1;
-      }
-    }
-
-    function decrementAuthorContributions (authorId) {
-      authorContributionsSelected[authorId]--;
-      if ( authorContributionsSelected[authorId] > 0 ) {
-        return;
-      }
-      delete authorContributionsSelected[authorId];
-    }
-
-    function isContributionSelected (contributionId) {
-      return contributionsSelected[contributionId] === true;
-    }
-
-    function addContribution(accumulator, contribution) {
-      var
-        contributionId = contribution.id,
-        authorId = contribution.author_id,
-        authorWasSelected = isAuthorSelected(authorId);
-
-      if ( isContributionSelected(contributionId) ) {
-        console.error( description, "Contribution already selected: ", contribution );
-        return accumulator;
-      }
-      contributionsSelected[contributionId] = true;
-
-      incrementAuthorContributions(authorId);
-
-      if ( !authorWasSelected ) {
-        accumulator.increment();
-      }
+    function addAuthorContribution(accumulator, contribution) {
+      accumulator.addContribution( contribution );
       return accumulator;
     }
 
-    function removeContribution(accumulator, contribution) {
-      var
-        contributionId = contribution.id,
-        authorId = contribution.author_id;
-
-      if ( !isContributionSelected(contributionId) ) {
-        console.error( description, "Contribution unselected already: ", contribution );
-        return accumulator;
-      }
-      contributionsSelected[contributionId] = false;
-
-      decrementAuthorContributions(authorId);
-
-      if ( !isAuthorSelected(authorId) ) {
-        accumulator.decrement();
-      }
+    function removeAuthorContribution(accumulator, contribution) {
+      accumulator.removeContribution( contribution );
       return accumulator;
     }
 
-    function resetContributions() {
+    function resetAuthorContributions() {
       return createAccumulatorState(0);
     }
 
     crossfilterGroup.reduce(
-      addContribution,
-      removeContribution,
-      resetContributions
+      addAuthorContribution,
+      removeAuthorContribution,
+      resetAuthorContributions
     );
   }
 
