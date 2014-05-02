@@ -475,6 +475,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       value: countSelectedAuthors
     });
 
+  d3.select("#reset-all")
+    .on("click", function() {
+      dc.filterAll('ipcc-authors');
+      dc.renderAll('ipcc-authors');
+    });
+
   /*
   //#### Data Table
   // Create a data table widget and use the given css selector as anchor. You can also specify
