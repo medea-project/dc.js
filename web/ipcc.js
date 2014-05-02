@@ -325,8 +325,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       state,
       // hash of author id -> total contributions currently selected
       // (the property is deleted when no contribution is selected)
-      authorContributionsSelected = {},
-      contributionsSelected = {};
+      authorContributionsSelected = {};
 
     function incrementAuthorsCount() {
       authorsCount++;
@@ -363,20 +362,10 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       }
     }
 
-    function isContributionSelected (contributionId) {
-      return contributionsSelected[contributionId] === true;
-    }
-
     function addContribution (contribution) {
       var
         contributionId = contribution.id,
         authorId = contribution.author_id;
-
-      if ( isContributionSelected(contributionId) ) {
-        console.error( "Contribution already selected: ", contribution );
-        return;
-      }
-      contributionsSelected[contributionId] = true;
 
       incrementAuthorContributions(authorId);
     }
@@ -385,12 +374,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       var
         contributionId = contribution.id,
         authorId = contribution.author_id;
-
-      if ( !isContributionSelected(contributionId) ) {
-        console.error( "Contribution unselected already: ", contribution );
-        return;
-      }
-      contributionsSelected[contributionId] = false;
 
       decrementAuthorContributions(authorId);
     }
