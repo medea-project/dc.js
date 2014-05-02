@@ -7,6 +7,7 @@
 // ### Create Chart Objects
 // Create chart objects assocated with the container elements identified by the css selector.
 // Note: It is often a good idea to have these objects accessible at the global scope so that they can be modified or filtered by other page controls.
+var authorsTable;
 var rolesOfResponsibilityChart = dc.pieChart("#roles-of-responsibility-chart");
 var totalAssessmentReportsChart;
 var distinctRolesChart = dc.pieChart("#distinct-roles-chart");
@@ -493,7 +494,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     <!-- data rows will filled in here -->
   </div>
   */
-  dc.dataTable(".dc-data-table", "ipcc-authors")
+  authorsTable = dc.dataTable(".dc-data-table", "ipcc-authors")
     .dimension(authorIdDimension)
     .group(function(d){
       var
