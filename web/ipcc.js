@@ -349,10 +349,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
     function removeAuthorContribution(contribution) {
       var authorId = contribution.author_id;
-      if ( authorContributionsSelected[authorId] <= 0 ) {
-        console.error( "No contribution to remove fron author ", authorId );
-        return;
-      }
 
       authorContributionsSelected[authorId]--;
 
