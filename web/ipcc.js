@@ -340,12 +340,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   }
 
   function extractAccumulatorStateValue (value) {
-    if ( typeof value === 'function' ) {
-      return value();
-    } else {
-      // value is unwrapped already
-      return value;
-    }
+    return value();
+  }
+
+  function customValueAccessor (d) {
+    return extractAccumulatorStateValue(d.value);
   }
 
   function countDistinctAuthorsForContributions ( crossfilterGroup, description ) {
@@ -437,16 +436,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
 
     countDistinctAuthorsForContributions(crossfilterGroup);
 
-    // replace group.all() with a function which unwraps the value
-    // out of the accumulator state when needed
-    crossfilterGroup.all = function() {
-      var groups = getAllGroups();
-      forEach(groups, function(group) {
-        group.value = extractAccumulatorStateValue(group.value);
-      });
-      return groups;
-    };
-
     return crossfilterGroup;
   }
 
@@ -456,12 +445,6 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       getTotalValue = crossfilterGroupAll.value;
 
     countDistinctAuthorsForContributions(crossfilterGroupAll);
-
-    // replace groupAll.all() with a function which unwraps the value
-    // from the accumulator state
-    crossfilterGroupAll.value = function(){
-      return extractAccumulatorStateValue( getTotalValue() );
-    };
 
     return crossfilterGroupAll;
   }
@@ -515,7 +498,11 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .dimension({
       size: always(total_authors)
     })
-    .group(allAuthorsGroup);
+    .group({
+      value: function() {
+        return extractAccumulatorStateValue( allAuthorsGroup.value() );
+      }
+    });
 
   /*
   //#### Data Table
@@ -595,6 +582,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .height(420)
     .margins({top: 10, right: 10, bottom: 30, left: 40})
     .dimension(totalAssessmentReportsDimension)
+    .valueAccessor(customValueAccessor)
     .group(totalAssessmentReportsGroup)
     //.y( d3.scale.log().domain([1,total_authors]).range([0,180]) )
     //.elasticY(true)
@@ -633,6 +621,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     .height(420)
     .margins({top: 10, left: 10, right: 30, bottom: 30})
     .dimension(workingGroupDimension)
+    .valueAccessor(customValueAccessor)
     .group(workingGroupGroup)
     // assign colors to each value in the x scale domain
     .ordinalColors(
