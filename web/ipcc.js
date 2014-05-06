@@ -472,10 +472,13 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   var totalAssessmentReportsGroup =
     createAuthorGroup(totalAssessmentReportsDimension);
 
-  // filter and group by working group
-  var workingGroupDimension =
-    contributionsCrossFilter.dimension( getter('wg') );
-  var workingGroupGroup = createAuthorGroup(workingGroupDimension);
+  // filter and group by cumulated working group
+  var cumulatedWorkingGroupDimension =
+    contributionsCrossFilter.dimension( function(d) {
+      return d.author.cumulated_working_group;
+    });
+  var cumulatedWorkingGroupGroup =
+    createAuthorGroup(cumulatedWorkingGroupDimension);
 
   // filter and group by role of responsibility
   var roleOfResponsibilityDimension =
@@ -663,12 +666,12 @@ d3.tsv("ipcc-authors.tsv", function (data) {
   workingGroupsChart.width(180)
     .height(420)
     .margins({top: 10, left: 10, right: 30, bottom: 30})
-    .dimension(workingGroupDimension)
+    .dimension(cumulatedWorkingGroupDimension)
     .valueAccessor(customValueAccessor)
-    .group(workingGroupGroup)
+    .group(cumulatedWorkingGroupGroup)
     // assign colors to each value in the x scale domain
     .ordinalColors(
-      ['#FF0000','#00FF00','#0000FF']
+      ['#FF0000','#FF00FF','#000000','#FFFF00','#0000FF','#00FFFF','#00FF00']
     )
     //.label(function (d) {
     //  return d.key;
