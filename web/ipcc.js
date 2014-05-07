@@ -47,7 +47,9 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     // total number of authors
     total_authors = data.length,
     // list of all contributions for all authors
-    author_contributions = [];
+    author_contributions = [],
+    // total number of author contributions
+    total_contributions;
 
   // from nada (CC0)
   /*
@@ -318,6 +320,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     d.assessment_reports = getAssessmentReports(d.contributions);
     d.total_assessment_reports = countProperties(d.assessment_reports);
   });
+  total_contributions = author_contributions.length;
 
   function createAccumulatorState (authorsCount){
     var
@@ -509,8 +512,8 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       value: countSelectedAuthors
     });
 
-  var maximumAuthorsSelect =
-    document.getElementById("maximum-authors-displayed");
+  var maximumContributionsSelect =
+    document.getElementById("maximum-contributions-displayed");
 
   /*
   //#### Data Table
@@ -557,7 +560,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       return description;
     })
     // (optional) max number of records to be shown, :default = 25
-    .size( getMaximumAuthorsToList() )
+    .size( getMaximumContributionsToList() )
     // dynamic columns creation using an array of closures
     .columns([
       function (d) {
@@ -578,34 +581,34 @@ d3.tsv("ipcc-authors.tsv", function (data) {
       table.selectAll(".dc-table-group").classed("info", true);
     });
 
-  function getMaximumAuthorsToList() {
+  function getMaximumContributionsToList() {
     var
-      value = maximumAuthorsSelect.value,
+      value = maximumContributionsSelect.value,
       VALUE_ALL = "ALL";
 
     if ( value === VALUE_ALL ) {
-      // list all authors
-      return total_authors;
+      // list all contributions
+      return total_contributions;
     } else {
       return Number(value);
     }
   }
 
-  d3.select(maximumAuthorsSelect)
+  d3.select(maximumContributionsSelect)
     .on("change", function() {
-      authorsTable.size( getMaximumAuthorsToList() );
+      authorsTable.size( getMaximumContributionsToList() );
       authorsTable.redraw();
     });
 
-  function resetMaximumAuthorsSelect() {
-    var defaultValue = maximumAuthorsSelect.firstChild.value;
-    maximumAuthorsSelect.value = defaultValue;
+  function resetMaximumContributionsSelect() {
+    var defaultValue = maximumContributionsSelect.firstChild.value;
+    maximumContributionsSelect.value = defaultValue;
     authorsTable.size( Number(defaultValue) );
   }
 
   d3.select("#reset-all")
     .on("click", function() {
-      resetMaximumAuthorsSelect();
+      resetMaximumContributionsSelect();
       dc.filterAll('ipcc-authors');
       dc.renderAll('ipcc-authors');
     });
