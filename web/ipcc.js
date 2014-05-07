@@ -773,7 +773,7 @@ d3.tsv("ipcc-authors.tsv", function (data) {
     // Default min angle is 0.5.
     .minAngleForLabel(0); // always display labels
 
-  d3.select("#reset-roles-of-responsibility-chart")
+  d3.select("#reset-distinct-roles-chart")
     .on("click", function() {
       distinctRolesChart.filterAll("ipcc-authors");
       dc.redrawAll("ipcc-authors");
